@@ -1,23 +1,27 @@
 /* ============================================
    J277 REVISION TUTOR — STYLESHEET
-   Design system: VisuLearn
+   Design system: Claude (Anthropic-inspired)
    ============================================ */
 
-/* ---------- CSS Variables (VisuLearn palette) ---------- */
+/* ---------- CSS Variables (Claude palette) ---------- */
 :root {
-    /* Primary palette */
-    --primary: #0A3D62;
-    --secondary: #D0D3D4;
-    --accent: #F5A623;
-    --bg: #F4F6F8;
-    --text-body: #333333;
-    --text-muted: #888888;
+    /* Primary palette — warm cream surface, terracotta accent */
+    --primary: #C15F3C;              /* terracotta / clay */
+    --primary-deep: #A94E2E;         /* hover / pressed */
+    --primary-tint: rgba(193, 95, 60, 0.08);
+    --primary-tint-strong: rgba(193, 95, 60, 0.14);
+    --secondary: #E7DFD1;            /* warm border / divider */
+    --accent: #C15F3C;               /* legacy alias — same as primary */
+    --bg: #F5F1EB;                   /* signature cream */
+    --surface: #FBF9F4;              /* cards, panels */
+    --text-body: #1F1D1A;            /* near-black ink, warm */
+    --text-muted: #6B655B;           /* muted warm grey */
 
-    /* Semantic colours */
-    --success: #2ECC71;
-    --warning: #F1C40F;
-    --error: #E74C3C;
-    --code-bg: #0D202F;
+    /* Semantic colours — earthy, muted */
+    --success: #4F7A4A;
+    --warning: #B98A2B;
+    --error: #B4432B;
+    --code-bg: #1F1D1A;
 
     /* Spacing */
     --space-xs: 4px;
@@ -27,18 +31,19 @@
     --space-xl: 32px;
     --space-2xl: 40px;
 
-    /* Radii */
-    --radius-sm: 8px;
-    --radius-md: 12px;
-    --radius-lg: 16px;
+    /* Radii — a touch tighter than VisuLearn for editorial feel */
+    --radius-sm: 6px;
+    --radius-md: 10px;
+    --radius-lg: 14px;
 
-    /* Shadows */
-    --shadow-card: 0 4px 12px rgba(0, 0, 0, 0.08);
-    --shadow-subtle: 0 2px 6px rgba(0, 0, 0, 0.05);
+    /* Shadows — very soft, warm-tinted */
+    --shadow-card: 0 1px 2px rgba(31, 29, 26, 0.04), 0 8px 24px rgba(31, 29, 26, 0.05);
+    --shadow-subtle: 0 1px 2px rgba(31, 29, 26, 0.05);
 
     /* Typography */
-    --font-main: system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Helvetica, Arial, sans-serif;
-    --font-code: 'Courier New', Courier, monospace;
+    --font-main: "Inter", system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Helvetica, Arial, sans-serif;
+    --font-heading: "Fraunces", "Iowan Old Style", "Palatino", Georgia, ui-serif, serif;
+    --font-code: "JetBrains Mono", ui-monospace, "SF Mono", Menlo, Consolas, monospace;
 }
 
 /* ---------- Reset & Base ---------- */
@@ -92,17 +97,21 @@ header {
 }
 
 header h1 {
-    font-size: 2.2rem;
-    font-weight: 700;
-    color: var(--primary);
+    font-family: var(--font-heading);
+    font-size: 2.6rem;
+    font-weight: 500;
+    color: var(--text-body);
     letter-spacing: -0.02em;
+    line-height: 1.1;
 }
 
 header h2 {
-    font-size: 1.2rem;
+    font-family: var(--font-heading);
+    font-size: 1.25rem;
     font-weight: 400;
+    font-style: italic;
     color: var(--text-muted);
-    margin-top: var(--space-xs);
+    margin-top: var(--space-sm);
 }
 
 header .brand {
@@ -120,7 +129,10 @@ header .brand {
 }
 
 .compact-header h1 {
-    font-size: 1.4rem;
+    font-family: var(--font-heading);
+    font-size: 1.5rem;
+    font-weight: 500;
+    color: var(--text-body);
 }
 
 .header-row {
@@ -135,7 +147,8 @@ header .brand {
 
 /* ---------- Main Content Card ---------- */
 #main-content {
-    background: white;
+    background: var(--surface);
+    border: 1px solid var(--secondary);
     border-radius: var(--radius-lg);
     box-shadow: var(--shadow-card);
     padding: var(--space-xl);
@@ -165,9 +178,11 @@ header .brand {
 
 /* ---------- Topic Selection ---------- */
 .topic-selection h3 {
-    font-size: 1.2rem;
-    font-weight: 600;
+    font-family: var(--font-heading);
+    font-size: 1.35rem;
+    font-weight: 500;
     color: var(--text-body);
+    letter-spacing: -0.01em;
     margin-bottom: var(--space-md);
 }
 
@@ -198,7 +213,7 @@ header .brand {
 }
 
 .btn-primary:hover {
-    filter: brightness(1.1);
+    background: var(--primary-deep);
 }
 
 .btn-primary:active {
@@ -254,21 +269,24 @@ header .brand {
 }
 
 .btn-back:hover {
-    background: rgba(10, 61, 98, 0.08);
+    background: var(--primary-tint-strong);
 }
 
 /* ---------- Setup Panels ---------- */
 .setup-panel {
-    background: white;
+    background: var(--surface);
+    border: 1px solid var(--secondary);
     border-radius: var(--radius-lg);
     box-shadow: var(--shadow-card);
     padding: var(--space-xl);
 }
 
 .setup-panel h3 {
-    font-size: 1.4rem;
-    font-weight: 600;
+    font-family: var(--font-heading);
+    font-size: 1.6rem;
+    font-weight: 500;
     color: var(--text-body);
+    letter-spacing: -0.01em;
     margin-bottom: var(--space-sm);
 }
 
@@ -301,7 +319,7 @@ header .brand {
 
 .unit-btn:hover {
     border-color: var(--primary);
-    background: rgba(10, 61, 98, 0.03);
+    background: var(--primary-tint);
 }
 
 .unit-btn.selected {
@@ -334,7 +352,7 @@ header .brand {
 /* ---------- Sub-topic Selector ---------- */
 .unit-btn.expanded {
     border-color: var(--primary);
-    background: rgba(10, 61, 98, 0.03);
+    background: var(--primary-tint);
 }
 
 .subtopic-panel {
@@ -364,7 +382,7 @@ header .brand {
 
 .subtopic-btn:hover {
     border-color: var(--primary);
-    background: rgba(10, 61, 98, 0.03);
+    background: var(--primary-tint);
 }
 
 .subtopic-btn-all {
@@ -405,7 +423,8 @@ header .brand {
 
 /* ---------- Chat Interface ---------- */
 .chat-container {
-    background: white;
+    background: var(--surface);
+    border: 1px solid var(--secondary);
     border-radius: var(--radius-lg);
     box-shadow: var(--shadow-card);
     display: flex;
@@ -485,11 +504,11 @@ header .brand {
 .message-summary {
     align-self: stretch;
     max-width: 100%;
-    background: white;
-    border: 1px solid var(--accent);
-    border-left-width: 4px;
+    background: var(--surface);
+    border: 1px solid var(--secondary);
+    border-left: 3px solid var(--accent);
     border-radius: var(--radius-md);
-    padding: 16px 18px;
+    padding: 18px 20px;
     margin-top: var(--space-md);
     box-shadow: var(--shadow-subtle);
 }
