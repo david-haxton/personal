@@ -3,6 +3,10 @@
    Handles: navigation, quiz UI
    ============================================ */
 
+// Backend lives at the original deployment; this frontend is a duplicate
+// that reuses those endpoints (CORS whitelisted on the API side).
+const API_BASE = 'https://j277-revision-2qew.vercel.app';
+
 // ==================== STATE ====================
 
 const state = {
@@ -315,7 +319,7 @@ async function generateSessionSummary() {
 
     let fullText = '';
     try {
-        const response = await fetch('/api/quiz', {
+        const response = await fetch(`${API_BASE}/api/quiz`, {
             method: 'POST',
             headers: { 'Content-Type': 'application/json' },
             body: JSON.stringify({
@@ -502,7 +506,7 @@ async function streamQuizReply(unit, messages, subtopic) {
     const payload = { unit, messages };
     if (subtopic) payload.subtopic = subtopic;
 
-    const response = await fetch('/api/quiz', {
+    const response = await fetch(`${API_BASE}/api/quiz`, {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify(payload)
@@ -764,7 +768,7 @@ async function startPractice(paper, question) {
 
     // Fetch question text from /api/questions
     try {
-        const response = await fetch(`/api/questions?paper=${paper}&question=${encodeURIComponent(question)}`);
+        const response = await fetch(`${API_BASE}/api/questions?paper=${paper}&question=${encodeURIComponent(question)}`);
         const data = await response.json();
 
         if (!response.ok) {
@@ -840,7 +844,7 @@ async function submitPracticeAnswer() {
             payload.attempt1Answer = practiceState.attempt1Answer;
         }
 
-        const response = await fetch('/api/practice', {
+        const response = await fetch(`${API_BASE}/api/practice`, {
             method: 'POST',
             headers: { 'Content-Type': 'application/json' },
             body: JSON.stringify(payload),
