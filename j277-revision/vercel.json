@@ -1,0 +1,55 @@
+{
+  "version": 2,
+  "builds": [
+    {
+      "src": "api/quiz.py",
+      "use": "@vercel/python"
+    },
+    {
+      "src": "api/practice.py",
+      "use": "@vercel/python"
+    },
+    {
+      "src": "api/questions.py",
+      "use": "@vercel/python"
+    },
+    {
+      "src": "index.html",
+      "use": "@vercel/static"
+    },
+    {
+      "src": "style.css",
+      "use": "@vercel/static"
+    },
+    {
+      "src": "script.js",
+      "use": "@vercel/static"
+    }
+  ],
+  "routes": [
+    {
+      "src": "/api/quiz",
+      "dest": "/api/quiz.py"
+    },
+    {
+      "src": "/api/practice",
+      "dest": "/api/practice.py"
+    },
+    {
+      "src": "/api/questions",
+      "dest": "/api/questions.py"
+    },
+    {
+      "src": "/papers/(.*)",
+      "dest": "/public/papers/$1"
+    },
+    {
+      "src": "/(.*\\.(css|js|pdf|png|ico))",
+      "dest": "/$1"
+    },
+    {
+      "src": "/(.*)",
+      "dest": "/index.html"
+    }
+  ]
+}

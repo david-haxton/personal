@@ -1,0 +1,589 @@
+<!DOCTYPE html>
+<html lang="en-GB">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>The KCS CompSci Revision Tutor</title>
+    <link rel="stylesheet" href="style.css">
+    <style>
+        /* Component selector tabs */
+        .component-tabs {
+            display: flex;
+            gap: 8px;
+            margin-bottom: 24px;
+        }
+
+        .component-tab {
+            flex: 1;
+            padding: 12px 16px;
+            border: 2px solid var(--border, #e0e0e0);
+            border-radius: 8px;
+            background: transparent;
+            font-size: 0.9rem;
+            font-weight: 600;
+            cursor: pointer;
+            transition: all 0.2s ease;
+            text-align: center;
+        }
+
+        .component-tab .tab-number {
+            display: block;
+            font-size: 0.75rem;
+            font-weight: 700;
+            letter-spacing: 0.05em;
+            text-transform: uppercase;
+            opacity: 0.7;
+            margin-bottom: 2px;
+        }
+
+        .component-tab .tab-name {
+            display: block;
+            font-size: 0.85rem;
+        }
+
+        .component-tab.active {
+            background: var(--accent, #0A3D62);
+            border-color: var(--accent, #0A3D62);
+            color: #ffffff;
+        }
+
+        .component-tab.active .tab-number {
+            opacity: 0.85;
+        }
+
+        .component-tab:not(.active):hover {
+            border-color: var(--accent, #0A3D62);
+            color: var(--accent, #0A3D62);
+        }
+
+        /* Unit panels */
+        .unit-panel {
+            display: none;
+        }
+
+        .unit-panel.active {
+            display: block;
+        }
+
+        /* Paper 2 badge on unit buttons */
+        .unit-btn.paper2 .unit-number {
+            background: transparent;
+            color: var(--accent2, #F5A623);
+            border: 2px solid var(--accent2, #F5A623);
+        }
+
+        /* Practice mode */
+        .practice-intro {
+            font-size: 0.9rem;
+            color: var(--text-secondary, #555);
+            margin-bottom: 20px;
+            line-height: 1.5;
+        }
+
+        .practice-question-list {
+            display: none;
+        }
+
+        .practice-question-list.active {
+            display: block;
+        }
+
+        .practice-q-btn {
+            display: flex;
+            align-items: center;
+            gap: 12px;
+            padding: 12px 14px;
+            border: 1px solid var(--border, #e0e0e0);
+            border-radius: 8px;
+            margin-bottom: 6px;
+            cursor: pointer;
+            transition: all 0.15s ease;
+            background: transparent;
+        }
+
+        .practice-q-btn:hover {
+            border-color: var(--accent, #0A3D62);
+            background: var(--accent-light, #f0f4f8);
+        }
+
+        .q-marks {
+            flex-shrink: 0;
+            width: 28px;
+            height: 28px;
+            border-radius: 50%;
+            background: var(--accent, #0A3D62);
+            color: #fff;
+            font-size: 0.75rem;
+            font-weight: 700;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+        }
+
+        .q-label {
+            font-size: 0.88rem;
+            color: var(--text, #222);
+        }
+
+        .practice-question-header {
+            display: flex;
+            align-items: center;
+            gap: 12px;
+            margin-bottom: 16px;
+        }
+
+        .practice-question-box {
+            background: var(--surface, #f8f9fa);
+            border: 1px solid var(--border, #e0e0e0);
+            border-radius: 8px;
+            padding: 20px;
+            margin-bottom: 20px;
+            font-size: 0.95rem;
+            line-height: 1.6;
+        }
+
+        .practice-question-box .q-table {
+            width: 100%;
+            border-collapse: collapse;
+            margin: 12px 0;
+            font-size: 0.9rem;
+        }
+
+        .practice-question-box .q-table th,
+        .practice-question-box .q-table td {
+            border: 1px solid var(--border, #ccc);
+            padding: 8px 12px;
+            text-align: left;
+        }
+
+        .practice-question-box .q-table thead {
+            background: var(--accent, #0A3D62);
+            color: #fff;
+        }
+
+        .practice-feedback-box {
+            border-left: 3px solid var(--accent, #0A3D62);
+            padding: 16px 20px;
+            margin-bottom: 20px;
+            background: var(--surface, #f8f9fa);
+            border-radius: 0 8px 8px 0;
+            font-size: 0.92rem;
+            line-height: 1.6;
+        }
+
+        .practice-attempt-label {
+            display: flex;
+            align-items: center;
+            gap: 10px;
+            margin-bottom: 8px;
+            font-size: 0.85rem;
+            font-weight: 600;
+            color: var(--text-secondary, #555);
+        }
+
+        #practice-answer-input {
+            width: 100%;
+            padding: 12px;
+            border: 1px solid var(--border, #e0e0e0);
+            border-radius: 8px;
+            font-size: 0.95rem;
+            line-height: 1.5;
+            resize: vertical;
+            box-sizing: border-box;
+            margin-bottom: 12px;
+            font-family: inherit;
+        }
+
+        .btn-primary {
+            padding: 12px 24px;
+            background: var(--accent, #0A3D62);
+            color: #fff;
+            border: none;
+            border-radius: 8px;
+            font-size: 0.95rem;
+            font-weight: 600;
+            cursor: pointer;
+            transition: opacity 0.15s ease;
+        }
+
+        .btn-primary:hover {
+            opacity: 0.88;
+        }
+
+        .btn-primary:disabled {
+            opacity: 0.5;
+            cursor: not-allowed;
+        }
+
+        #practice-complete-actions {
+            display: flex;
+            gap: 10px;
+            margin-top: 20px;
+        }
+
+        .feedback-heading {
+            font-size: 0.95rem;
+            font-weight: 700;
+            color: var(--accent, #0A3D62);
+            margin: 14px 0 4px 0;
+            padding: 0;
+        }
+
+        .feedback-subheading {
+            font-size: 0.9rem;
+            font-weight: 600;
+            color: var(--text, #222);
+            margin: 10px 0 4px 0;
+            padding: 0;
+        }
+
+        /* Exam Practice standalone section */
+        .ask-section {
+            margin-top: 32px;
+            padding-top: 24px;
+            border-top: 1px solid var(--border, #e0e0e0);
+        }
+
+        .ask-section h3 {
+            margin-bottom: 8px;
+        }
+
+        .ask-section p {
+            font-size: 0.9rem;
+            color: var(--text-secondary, #555);
+            margin-bottom: 16px;
+            line-height: 1.5;
+        }
+
+        .btn-ask {
+            display: flex;
+            align-items: center;
+            gap: 12px;
+            width: 100%;
+            padding: 16px 20px;
+            border: 2px solid var(--accent, #0A3D62);
+            border-radius: 10px;
+            background: transparent;
+            cursor: pointer;
+            transition: all 0.2s ease;
+            text-align: left;
+        }
+
+        .btn-ask:hover {
+            background: var(--accent, #0A3D62);
+            color: #ffffff;
+        }
+
+        .btn-ask:hover .ask-icon {
+            color: #ffffff;
+        }
+
+        .ask-icon {
+            color: var(--accent, #0A3D62);
+            flex-shrink: 0;
+            transition: color 0.2s ease;
+        }
+
+        .ask-label {
+            display: flex;
+            flex-direction: column;
+            gap: 2px;
+        }
+
+        .ask-label-main {
+            font-size: 0.95rem;
+            font-weight: 700;
+        }
+
+        .ask-label-sub {
+            font-size: 0.8rem;
+            opacity: 0.7;
+        }
+    </style>
+</head>
+<body>
+    <div id="app-container">
+
+        <!-- ==================== LANDING VIEW ==================== -->
+        <div id="view-landing" class="view active">
+            <header>
+                <h1>J277 Revision Tutor</h1>
+                <h2 id="header-subtitle">OCR GCSE Computer Science</h2>
+                <p class="brand">Designed &amp; Developed by the KCS CompSci Dept, 2026</p>
+            </header>
+
+            <main id="main-content">
+                <!-- Description -->
+                <section class="landing-description">
+                    <p>An AI-powered revision tutor for OCR J277 Computer Science, designed to help you prepare for your June 2026 exams. Every question, prompt, and piece of feedback is grounded in the OCR specification, mark schemes, and examiner reports — not a generic chatbot. It's still an AI though: if something the tutor tells you doesn't match what your teacher or the spec says, trust them first.</p>
+                    <p>Choose a paper and a topic below, and the tutor will test your understanding through targeted questioning. It adapts to your responses, catches misconceptions, and won't just hand you the answers.</p>
+                    <p class="landing-meta">No accounts. Your conversation stays in your browser and disappears when you close the tab. Messages are sent to Anthropic to run the AI — nothing else is stored or shared.</p>
+                </section>
+
+                <!-- Topic Selection -->
+                <section class="topic-selection">
+                    <h3>Choose a topic</h3>
+
+                    <!-- Component tabs -->
+                    <div class="component-tabs">
+                        <button class="component-tab active" onclick="switchComponent('01')" id="tab-01">
+                            <span class="tab-number">J277/01</span>
+                            <span class="tab-name">Computer Systems</span>
+                        </button>
+                        <button class="component-tab" onclick="switchComponent('02')" id="tab-02">
+                            <span class="tab-number">J277/02</span>
+                            <span class="tab-name">Algorithms &amp; Programming</span>
+                        </button>
+                    </div>
+
+                    <!-- J277/01 units -->
+                    <div class="unit-panel active" id="panel-01">
+                        <div class="unit-selector" id="unit-selector-01">
+                            <button class="unit-btn" data-unit="1.1" onclick="selectUnit('1.1')">
+                                <span class="unit-number">1.1</span>
+                                <span class="unit-name">Systems Architecture</span>
+                            </button>
+                            <button class="unit-btn" data-unit="1.2" onclick="selectUnit('1.2')">
+                                <span class="unit-number">1.2</span>
+                                <span class="unit-name">Memory &amp; Storage</span>
+                            </button>
+                            <button class="unit-btn" data-unit="1.3" onclick="selectUnit('1.3')">
+                                <span class="unit-number">1.3</span>
+                                <span class="unit-name">Networks, Connections &amp; Protocols</span>
+                            </button>
+                            <button class="unit-btn" data-unit="1.4" onclick="selectUnit('1.4')">
+                                <span class="unit-number">1.4</span>
+                                <span class="unit-name">System Security</span>
+                            </button>
+                            <button class="unit-btn" data-unit="1.5" onclick="selectUnit('1.5')">
+                                <span class="unit-number">1.5</span>
+                                <span class="unit-name">Systems Software</span>
+                            </button>
+                            <button class="unit-btn" data-unit="1.6" onclick="selectUnit('1.6')">
+                                <span class="unit-number">1.6</span>
+                                <span class="unit-name">Ethical, Legal, Cultural &amp; Environmental Impacts</span>
+                            </button>
+                        </div>
+                    </div>
+
+                    <!-- J277/02 units -->
+                    <div class="unit-panel" id="panel-02">
+                        <div class="unit-selector" id="unit-selector-02">
+                            <button class="unit-btn paper2" data-unit="2.1" onclick="selectUnit('2.1')">
+                                <span class="unit-number">2.1</span>
+                                <span class="unit-name">Algorithms</span>
+                            </button>
+                            <button class="unit-btn paper2" data-unit="2.2" onclick="selectUnit('2.2')">
+                                <span class="unit-number">2.2</span>
+                                <span class="unit-name">Programming Fundamentals</span>
+                            </button>
+                            <button class="unit-btn paper2" data-unit="2.3" onclick="selectUnit('2.3')">
+                                <span class="unit-number">2.3</span>
+                                <span class="unit-name">Producing Robust Programs</span>
+                            </button>
+                            <button class="unit-btn paper2" data-unit="2.4" onclick="selectUnit('2.4')">
+                                <span class="unit-number">2.4</span>
+                                <span class="unit-name">Boolean Logic</span>
+                            </button>
+                            <button class="unit-btn paper2" data-unit="2.5" onclick="selectUnit('2.5')">
+                                <span class="unit-number">2.5</span>
+                                <span class="unit-name">Programming Languages &amp; IDEs</span>
+                            </button>
+                        </div>
+                    </div>
+
+                </section>
+
+                <!-- Exam Practice entry point is temporarily hidden — see git history to restore.
+                <section class="ask-section">
+                    <button class="btn-ask" onclick="navigateTo('practice')">
+                        <svg class="ask-icon" width="24" height="24" viewBox="0 0 24 24" fill="none" aria-hidden="true">
+                            <path d="M9 5H7a2 2 0 0 0-2 2v12a2 2 0 0 0 2 2h10a2 2 0 0 0 2-2V7a2 2 0 0 0-2-2h-2" stroke="currentColor" stroke-width="2" stroke-linecap="round"/>
+                            <rect x="9" y="3" width="6" height="4" rx="1" stroke="currentColor" stroke-width="2"/>
+                            <path d="M9 12h6M9 16h4" stroke="currentColor" stroke-width="2" stroke-linecap="round"/>
+                        </svg>
+                        <span class="ask-label">
+                            <span class="ask-label-main">Exam Practice</span>
+                            <span class="ask-label-sub">Answer past paper questions and get feedback. Two attempts — coaching first, mark second.</span>
+                        </span>
+                    </button>
+                </section>
+                -->
+
+            </main>
+
+            <footer>
+                <p>Designed &amp; Developed by the KCS CompSci Dept, 2026</p>
+            </footer>
+        </div>
+
+        <!-- ==================== QUIZ MODE VIEW ==================== -->
+        <div id="view-quiz" class="view">
+            <header class="compact-header">
+                <div class="header-row">
+                    <button class="btn-back" onclick="finishQuiz()" aria-label="Back to home">
+                        <svg width="20" height="20" viewBox="0 0 20 20" fill="none" aria-hidden="true">
+                            <path d="M12.5 15L7.5 10L12.5 5" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
+                        </svg>
+                        Home
+                    </button>
+                    <h1>Revision Tutor</h1>
+                    <div class="header-spacer"></div>
+                </div>
+            </header>
+
+            <main id="quiz-content">
+                <!-- Chat Interface -->
+                <div id="quiz-chat" class="chat-container">
+                    <div class="chat-header">
+                        <span id="quiz-unit-label" class="tag"></span>
+                        <button class="btn-secondary btn-small" onclick="endQuiz()">End Session</button>
+                    </div>
+                    <div id="quiz-messages" class="chat-messages" role="log" aria-live="polite">
+                        <!-- Messages populated by JS -->
+                    </div>
+                    <div class="chat-input-area">
+                        <textarea
+                            id="quiz-input"
+                            placeholder="Type your answer..."
+                            rows="2"
+                            aria-label="Your answer"
+                            onkeydown="handleQuizKeydown(event)"
+                        ></textarea>
+                        <button id="quiz-send-btn" class="btn-send" onclick="sendQuizMessage()" aria-label="Send answer">
+                            <svg width="20" height="20" viewBox="0 0 20 20" fill="none" aria-hidden="true">
+                                <path d="M3 10L17 3L10 17L9 11L3 10Z" fill="currentColor"/>
+                            </svg>
+                        </button>
+                    </div>
+                </div>
+            </main>
+        </div>
+
+        <!-- ==================== PRACTICE MODE VIEW ==================== -->
+        <div id="view-practice" class="view">
+            <header class="compact-header">
+                <div class="header-row">
+                    <button class="btn-back" onclick="endPractice()" aria-label="Back to home">
+                        <svg width="20" height="20" viewBox="0 0 20 20" fill="none" aria-hidden="true">
+                            <path d="M12.5 15L7.5 10L12.5 5" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
+                        </svg>
+                        Home
+                    </button>
+                    <h1>Exam Practice</h1>
+                    <div class="header-spacer"></div>
+                </div>
+            </header>
+
+            <main id="practice-content">
+
+                <div id="practice-selector">
+                    <p class="practice-intro">Pick a paper and a question. The question will appear on screen. You get two attempts — the first gives you coaching, the second gives you your mark.</p>
+
+                    <div class="component-tabs" style="margin-bottom: 16px;">
+                        <button class="component-tab active" onclick="switchPracticePaper('2023')" id="practice-tab-2023">
+                            <span class="tab-number">J277/01</span>
+                            <span class="tab-name">June 2023</span>
+                        </button>
+                        <button class="component-tab" onclick="switchPracticePaper('2024')" id="practice-tab-2024">
+                            <span class="tab-number">J277/01</span>
+                            <span class="tab-name">June 2024</span>
+                        </button>
+                    </div>
+
+                    <div class="practice-question-list active" id="practice-list-2023">
+                        <div class="practice-q-btn" onclick="startPractice('2023','Q1')"><span class="q-marks">6</span><span class="q-label">Q1(a) — Sound sampling cloze</span></div>
+                        <div class="practice-q-btn" onclick="startPractice('2023','Q1b-i')"><span class="q-marks">1</span><span class="q-label">Q1(b)(i) — Metadata</span></div>
+                        <div class="practice-q-btn" onclick="startPractice('2023','Q1b-iii')"><span class="q-marks">1</span><span class="q-label">Q1(b)(iii) — Maximum colours from 4-bit colour depth</span></div>
+                        <div class="practice-q-btn" onclick="startPractice('2023','Q1b-iv')"><span class="q-marks">2</span><span class="q-label">Q1(b)(iv) — Effects of increasing colour depth</span></div>
+                        <div class="practice-q-btn" onclick="startPractice('2023','Q1c-i')"><span class="q-marks">3</span><span class="q-label">Q1(c)(i) — Compression for text document</span></div>
+                        <div class="practice-q-btn" onclick="startPractice('2023','Q1c-ii')"><span class="q-marks">3</span><span class="q-label">Q1(c)(ii) — Compression for image file</span></div>
+                        <div class="practice-q-btn" onclick="startPractice('2023','Q2a-i')"><span class="q-marks">4</span><span class="q-label">Q2(a)(i) — Protocols table</span></div>
+                        <div class="practice-q-btn" onclick="startPractice('2023','Q2a-ii')"><span class="q-marks">2</span><span class="q-label">Q2(a)(ii) — Reasons for protocol layers</span></div>
+                        <div class="practice-q-btn" onclick="startPractice('2023','Q2b-i')"><span class="q-marks">1</span><span class="q-label">Q2(b)(i) — Characteristic of a LAN</span></div>
+                        <div class="practice-q-btn" onclick="startPractice('2023','Q2b-ii')"><span class="q-marks">4</span><span class="q-label">Q2(b)(ii) — Benefits of wireless connections</span></div>
+                        <div class="practice-q-btn" onclick="startPractice('2023','Q2b-iii')"><span class="q-marks">2</span><span class="q-label">Q2(b)(iii) — Drawbacks of wireless connections</span></div>
+                        <div class="practice-q-btn" onclick="startPractice('2023','Q4a')"><span class="q-marks">4</span><span class="q-label">Q4(a) — Threats and prevention methods table</span></div>
+                        <div class="practice-q-btn" onclick="startPractice('2023','Q4b')"><span class="q-marks">3</span><span class="q-label">Q4(b) — Name and describe a threat</span></div>
+                        <div class="practice-q-btn" onclick="startPractice('2023','Q5a-i')"><span class="q-marks">2</span><span class="q-label">Q5(a)(i) — Primary and secondary storage</span></div>
+                        <div class="practice-q-btn" onclick="startPractice('2023','Q5a-ii')"><span class="q-marks">2</span><span class="q-label">Q5(a)(ii) — Example secondary storage device</span></div>
+                        <div class="practice-q-btn" onclick="startPractice('2023','Q5b')"><span class="q-marks">1</span><span class="q-label">Q5(b) — Need for utility software</span></div>
+                        <div class="practice-q-btn" onclick="startPractice('2023','Q5c-i')"><span class="q-marks">3</span><span class="q-label">Q5(c)(i) — Identify the client computer</span></div>
+                        <div class="practice-q-btn" onclick="startPractice('2023','Q5c-ii')"><span class="q-marks">3</span><span class="q-label">Q5(c)(ii) — Identify the server computer</span></div>
+                        <div class="practice-q-btn" onclick="startPractice('2023','Q5d-i')"><span class="q-marks">4</span><span class="q-label">Q5(d)(i) — Benefits of proprietary software</span></div>
+                        <div class="practice-q-btn" onclick="startPractice('2023','Q5d-ii')"><span class="q-marks">2</span><span class="q-label">Q5(d)(ii) — Benefit of open source to users</span></div>
+                        <div class="practice-q-btn" onclick="startPractice('2023','Q6')"><span class="q-marks">8</span><span class="q-label">Q6 — Facial recognition: ethical, privacy and legal impacts</span></div>
+                        <div class="practice-q-btn" onclick="startPractice('2023','Q7')"><span class="q-marks">3</span><span class="q-label">Q7 — Embedded system in a car</span></div>
+                    </div>
+
+                    <div class="practice-question-list" id="practice-list-2024">
+                        <div class="practice-q-btn" onclick="startPractice('2024','Q1b')"><span class="q-marks">4</span><span class="q-label">Q1(b) — Binary and data calculations table</span></div>
+                        <div class="practice-q-btn" onclick="startPractice('2024','Q1d')"><span class="q-marks">3</span><span class="q-label">Q1(d) — Convert hexadecimal to denary</span></div>
+                        <div class="practice-q-btn" onclick="startPractice('2024','Q2a-i')"><span class="q-marks">2</span><span class="q-label">Q2(a)(i) — IPv4 and IPv6 examples</span></div>
+                        <div class="practice-q-btn" onclick="startPractice('2024','Q2a-ii')"><span class="q-marks">2</span><span class="q-label">Q2(a)(ii) — Format of a MAC address</span></div>
+                        <div class="practice-q-btn" onclick="startPractice('2024','Q2b-i')"><span class="q-marks">4</span><span class="q-label">Q2(b)(i) — Benefits of wired connections</span></div>
+                        <div class="practice-q-btn" onclick="startPractice('2024','Q2b-ii')"><span class="q-marks">3</span><span class="q-label">Q2(b)(ii) — Reasons for wireless access</span></div>
+                        <div class="practice-q-btn" onclick="startPractice('2024','Q2c-ii')"><span class="q-marks">2</span><span class="q-label">Q2(c)(ii) — Benefit and drawback of star vs mesh topology</span></div>
+                        <div class="practice-q-btn" onclick="startPractice('2024','Q2c-iii')"><span class="q-marks">3</span><span class="q-label">Q2(c)(iii) — Role of the switch</span></div>
+                        <div class="practice-q-btn" onclick="startPractice('2024','Q3a')"><span class="q-marks">4</span><span class="q-label">Q3(a) — OS functions table</span></div>
+                        <div class="practice-q-btn" onclick="startPractice('2024','Q3b')"><span class="q-marks">6</span><span class="q-label">Q3(b) — Utility software cloze</span></div>
+                        <div class="practice-q-btn" onclick="startPractice('2024','Q4')"><span class="q-marks">8</span><span class="q-label">Q4 — Open source vs proprietary licence</span></div>
+                        <div class="practice-q-btn" onclick="startPractice('2024','Q5a-i')"><span class="q-marks">1</span><span class="q-label">Q5(a)(i) — Sound sampling definition</span></div>
+                        <div class="practice-q-btn" onclick="startPractice('2024','Q5a-ii')"><span class="q-marks">2</span><span class="q-label">Q5(a)(ii) — Effect of changing bit depth</span></div>
+                        <div class="practice-q-btn" onclick="startPractice('2024','Q5b-i')"><span class="q-marks">4</span><span class="q-label">Q5(b)(i) — Magnetic vs solid state storage</span></div>
+                        <div class="practice-q-btn" onclick="startPractice('2024','Q5b-ii')"><span class="q-marks">1</span><span class="q-label">Q5(b)(ii) — Another type of secondary storage</span></div>
+                        <div class="practice-q-btn" onclick="startPractice('2024','Q5b-iii')"><span class="q-marks">1</span><span class="q-label">Q5(b)(iii) — Smallest storage capacity</span></div>
+                        <div class="practice-q-btn" onclick="startPractice('2024','Q5b-iv')"><span class="q-marks">2</span><span class="q-label">Q5(b)(iv) — Calculate storage space</span></div>
+                        <div class="practice-q-btn" onclick="startPractice('2024','Q6a')"><span class="q-marks">2</span><span class="q-label">Q6(a) — Describe the fetch-execute cycle</span></div>
+                        <div class="practice-q-btn" onclick="startPractice('2024','Q6b')"><span class="q-marks">4</span><span class="q-label">Q6(b) — Registers table</span></div>
+                        <div class="practice-q-btn" onclick="startPractice('2024','Q6c')"><span class="q-marks">3</span><span class="q-label">Q6(c) — Three characteristics affecting CPU performance</span></div>
+                        <div class="practice-q-btn" onclick="startPractice('2024','Q7a')"><span class="q-marks">3</span><span class="q-label">Q7(a) — Explain the Follow Me embedded system</span></div>
+                        <div class="practice-q-btn" onclick="startPractice('2024','Q7b-i')"><span class="q-marks">2</span><span class="q-label">Q7(b)(i) — Items stored in ROM</span></div>
+                        <div class="practice-q-btn" onclick="startPractice('2024','Q7b-ii')"><span class="q-marks">3</span><span class="q-label">Q7(b)(ii) — Items stored in RAM</span></div>
+                        <div class="practice-q-btn" onclick="startPractice('2024','Q7b-iii')"><span class="q-marks">2</span><span class="q-label">Q7(b)(iii) — Why no virtual memory needed</span></div>
+                    </div>
+                </div>
+
+                <div id="practice-question-area" style="display:none;">
+                    <div class="practice-question-header">
+                        <button class="btn-secondary btn-small" onclick="backToSelector()">&#8592; Back to questions</button>
+                        <span id="practice-question-meta" class="tag"></span>
+                    </div>
+                    <div id="practice-question-text" class="practice-question-box"></div>
+                    <div id="practice-feedback" class="practice-feedback-box" style="display:none;"></div>
+                    <div id="practice-answer-area">
+                        <div class="practice-attempt-label">
+                            <span id="practice-attempt-indicator">Attempt 1 of 2</span>
+                            <span id="practice-marks-label" class="tag"></span>
+                        </div>
+                        <textarea
+                            id="practice-answer-input"
+                            placeholder="Write your answer here..."
+                            rows="6"
+                            aria-label="Your answer"
+                        ></textarea>
+                        <button id="practice-submit-btn" class="btn-primary" onclick="submitPracticeAnswer()">Submit answer</button>
+                    </div>
+                    <div id="practice-complete-actions" style="display:none;">
+                        <button class="btn-secondary" onclick="backToSelector()">Try another question</button>
+                        <button class="btn-secondary" onclick="endPractice()">Back to home</button>
+                    </div>
+                </div>
+
+            </main>
+        </div>
+
+    </div><!-- end app-container -->
+
+    <script>
+        // Component switching
+        function switchComponent(component) {
+            document.getElementById('tab-01').classList.toggle('active', component === '01');
+            document.getElementById('tab-02').classList.toggle('active', component === '02');
+            document.getElementById('panel-01').classList.toggle('active', component === '01');
+            document.getElementById('panel-02').classList.toggle('active', component === '02');
+        }
+    </script>
+    <script src="script.js"></script>
+</body>
+</html>

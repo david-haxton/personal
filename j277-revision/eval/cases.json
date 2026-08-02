@@ -1,0 +1,66 @@
+[
+  {
+    "label": "Q1b-i full mark: 'data about the data'",
+    "paper": "2023",
+    "question": "Q1b-i",
+    "answer": "Data about the data stored in the file, such as dimensions and file size.",
+    "expected_marks": 1,
+    "notes": "Textbook accepted phrasing — 'data about data' plus concrete examples from the Accept list."
+  },
+  {
+    "label": "Q1b-i zero: 'information about the image' (rejected)",
+    "paper": "2023",
+    "question": "Q1b-i",
+    "answer": "Information about the image.",
+    "expected_marks": 0,
+    "notes": "Mark scheme explicitly Do Not Accept — 'information about the image' without qualification is too vague."
+  },
+  {
+    "label": "Q1b-iii full mark: '16'",
+    "paper": "2023",
+    "question": "Q1b-iii",
+    "answer": "16",
+    "expected_marks": 1,
+    "notes": "Mark scheme accepts only the value 16."
+  },
+  {
+    "label": "Q1b-iii zero: common '4' error",
+    "paper": "2023",
+    "question": "Q1b-iii",
+    "answer": "4",
+    "expected_marks": 0,
+    "notes": "Flagged in the examiner report as a common error — confusing bits with number of colours."
+  },
+  {
+    "label": "Q1b-iv full mark: two distinct effects",
+    "paper": "2023",
+    "question": "Q1b-iv",
+    "answer": "More colours can be represented, and the file size will increase because each pixel needs more bits to store.",
+    "expected_marks": 2,
+    "notes": "Two accepted effects: greater range of colours + larger file size."
+  },
+  {
+    "label": "Q1b-iv partial: one valid effect only",
+    "paper": "2023",
+    "question": "Q1b-iv",
+    "answer": "The file size will increase.",
+    "expected_marks": 1,
+    "notes": "Single accepted effect — no coverage of the second mark."
+  },
+  {
+    "label": "Q1b-iv zero: rejected phrasings",
+    "paper": "2023",
+    "question": "Q1b-iv",
+    "answer": "The resolution will be better and the sound will be clearer.",
+    "expected_marks": 0,
+    "notes": "Both phrasings are on the Do Not Accept list — resolution relates to pixels not colour depth, sound relates to sampling."
+  },
+  {
+    "label": "Q1c-i full mark: lossless + two justifications",
+    "paper": "2023",
+    "question": "Q1c-i",
+    "answer": "Lossless compression. No data is lost, so the text remains readable. If characters were removed the text would become corrupted.",
+    "expected_marks": 3,
+    "notes": "Correct type + two accepted justifications ('no data lost' and 'text would corrupt without characters')."
+  }
+]
