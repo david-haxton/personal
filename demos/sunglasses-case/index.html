@@ -89,11 +89,25 @@
     --display: Oswald, "Arial Narrow", sans-serif;
     --sans: Inter, system-ui, sans-serif;
     --mono: "Roboto Mono", monospace;
+
+    /*
+     * This is a brand page that commits to one visual world — bone ground,
+     * dark panels, rust accent — so it is deliberately single-theme. Declaring
+     * the scheme stops a dark-mode browser restyling the email field out from
+     * under it.
+     */
+    color-scheme: light;
   }
 
   * { box-sizing: border-box; }
 
-  html { scroll-behavior: smooth; }
+  /* Matches body, so overscroll doesn't flash a different ground. */
+  html { scroll-behavior: smooth; background: var(--bone); }
+
+  @media (prefers-reduced-motion: reduce) {
+    html { scroll-behavior: auto; }
+    * { transition-duration: 0.01ms !important; }
+  }
 
   body {
     margin: 0;
