@@ -31,5 +31,9 @@ Nav · Hero · 01 The Philosophy · 02 Material Specification · 03 Field Notes 
   don't exist yet.
 - Colourway swatch hexes (Saddle Tan, Espresso Brown, Stealth Black) are
   approximations — match them to real hide samples before launch.
-- Fonts (Oswald, Inter, Roboto Mono) load from Google Fonts, so the page needs a
-  network connection to render in its intended typography.
+- Fonts are embedded, not linked, so the page renders in its real typography
+  with no network connection at all. Latin subsets of Oswald, Inter and Roboto
+  Mono, all SIL OFL. The design leans on Oswald's condensed metrics, and a
+  fallback face changes it substantially — hence carrying the ~108KB.
+- The page makes no external requests whatsoever, which also means it works
+  inside a strict content-security policy.
