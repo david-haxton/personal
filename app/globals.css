@@ -1,251 +1,92 @@
 :root {
-  --ink: #152a23;
-  --ink-secondary: #1e3a31;
-  --green: #22c55e;
-  --green-deep: #10b981;
-  --green-tint: #dcfce7;
-  --yellow: #fde047;
-  --pink: #ec4899;
-  --white: #ffffff;
-  --grey-50: #f9fafb;
-  --grey-200: #e5e7eb;
-  --grey-300: #d1d5db;
-  --grey-400: #9ca3af;
-  --grey-500: #4b5563;
+  --ink: #16241c;
+  --ground: #ffffff;
+  --green: #6ec46e;
+  --green-pale: #dff3df;
+  --green-ink: #4fa855;
+  --card-hover: #f6fbf6;
+  --muted: #5e6b62;
+  --muted-body: #3d4b43;
 }
 
 * {
   box-sizing: border-box;
 }
 
-html {
-  scroll-behavior: smooth;
+html,
+body {
+  margin: 0;
+  padding: 0;
 }
 
 body {
-  margin: 0;
-  font-family: "Inter", system-ui, sans-serif;
+  background: var(--ground);
   color: var(--ink);
-  background: var(--white);
+  font-family: Archivo, Helvetica, sans-serif;
   -webkit-font-smoothing: antialiased;
 }
 
 a {
-  color: var(--green-deep);
+  color: var(--ink);
   text-decoration: none;
 }
 
-a:hover {
-  color: var(--green);
-}
-
 h1,
-h2,
-h3,
-h4 {
-  font-family: "Plus Jakarta Sans", "Inter", sans-serif;
-  margin: 0;
-  letter-spacing: -0.02em;
-}
-
 p {
   margin: 0;
 }
 
-/* Tablet */
-@media (max-width: 960px) {
-  .nav-shell {
-    flex-wrap: wrap !important;
-    gap: 16px !important;
-    padding: 14px 18px !important;
-  }
-  .nav-links {
-    gap: 20px !important;
-    margin-left: 0 !important;
-    font-size: 13px !important;
-    flex-wrap: wrap !important;
-  }
-  .nav-cta {
-    margin-left: auto !important;
-    padding: 10px 16px !important;
-    font-size: 13px !important;
-    box-shadow: 4px 4px 0 var(--ink) !important;
-    white-space: nowrap !important;
-  }
-  .nav-brand {
-    white-space: nowrap !important;
-  }
-  .hero-pad {
-    padding: 60px 24px 80px !important;
-  }
-  .hero-tag-row {
-    flex-direction: column !important;
-    gap: 20px !important;
-  }
-  .hero-tag-row img {
-    width: 80px !important;
-  }
-  .svc-card-sticker {
-    width: 100px !important;
-  }
-  .svc02-sticker {
-    width: 80px !important;
-    top: -20px !important;
-    right: -10px !important;
-  }
-  .svc03-sticker {
-    width: 90px !important;
-    top: -28px !important;
-    right: 20px !important;
-  }
-  .contact-sticker {
-    width: 90px !important;
-    top: -32px !important;
-    left: -20px !important;
-  }
-  .teachers-sticker {
-    width: 110px !important;
-    top: -40px !important;
-    right: -10px !important;
-  }
-  .grid-2col {
-    grid-template-columns: 1fr !important;
-    gap: 32px !important;
-  }
-  .sec-pad {
-    padding: 60px 24px !important;
-  }
-  .card-inner-pad {
-    padding: 32px !important;
-  }
-  .svc-dark-panel {
-    min-height: 260px;
-  }
-  .svc02-left {
-    border-right: none !important;
-    border-bottom: 2px solid var(--ink) !important;
-  }
-  .stickers-abs {
-    display: none !important;
-  }
-  .teachers-headline {
-    grid-template-columns: 1fr !important;
-    gap: 32px !important;
-    align-items: start !important;
-  }
-  .table-mono {
-    font-size: 11px !important;
-  }
-  .table-mono th,
-  .table-mono td {
-    padding: 6px 4px !important;
-  }
+img {
+  max-width: 100%;
 }
 
-/* Mobile */
-@media (max-width: 600px) {
-  header {
-    padding: 12px 12px 4px !important;
-  }
-  .nav-shell {
-    padding: 12px 14px !important;
-    box-shadow: 4px 4px 0 var(--ink) !important;
-  }
-  .nav-brand {
-    font-size: 16px !important;
-    gap: 8px !important;
-  }
-  .nav-links {
-    display: none !important;
-  }
-  .nav-cta {
-    margin-left: auto !important;
-    padding: 8px 12px !important;
-    font-size: 11px !important;
-    white-space: nowrap !important;
-  }
-  .hero-cta-row a {
-    white-space: nowrap !important;
-  }
-  .hero-pad {
-    padding: 40px 16px 60px !important;
-  }
-  .hero-tag-pill {
-    padding: 14px 20px !important;
-    font-size: 15px !important;
-  }
-  .hero-cta-row {
-    gap: 10px !important;
-    margin-top: 36px !important;
-  }
-  .hero-cta-row a {
-    padding: 14px 20px !important;
-    font-size: 13px !important;
-    box-shadow: 4px 4px 0 var(--green) !important;
-    width: 100% !important;
-    text-align: center;
-  }
-  .hero-cta-row a + a {
-    box-shadow: 4px 4px 0 var(--ink) !important;
-  }
-  .hero-tag-row img {
-    display: none !important;
-  }
-  .svc-card-sticker {
-    width: 70px !important;
-    bottom: 12px !important;
-    right: 12px !important;
-  }
-  .svc02-sticker,
-  .svc03-sticker,
-  .contact-sticker,
-  .teachers-sticker {
-    display: none !important;
-  }
-  h1 img {
-    height: 0.9em !important;
-    margin: 0 6px !important;
-  }
-  .sec-pad {
-    padding: 48px 16px !important;
-  }
-  .card-inner-pad {
-    padding: 24px !important;
-  }
-  .svc-tile-grid {
-    grid-template-columns: 1fr !important;
-    gap: 10px !important;
-  }
-  .stat-num {
-    font-size: 3rem !important;
-  }
-  .stat-num .unit {
-    font-size: 1.75rem !important;
-  }
-  .stat-headline {
-    font-size: 1rem !important;
-  }
-  .table-wrap {
-    overflow-x: auto;
-  }
-  .contact-card {
-    padding: 32px 20px !important;
-    box-shadow: 6px 6px 0 var(--ink) !important;
-  }
-  .footer-row {
-    flex-direction: column !important;
-    align-items: flex-start !important;
-    gap: 16px !important;
-  }
-  .footer-links {
-    gap: 16px !important;
-    flex-wrap: wrap !important;
-  }
-  h1 {
-    font-size: 2.25rem !important;
-  }
-  .parents-note {
-    flex-direction: column !important;
-    gap: 8px !important;
-  }
+/* Hover is a shrinking shadow — the element presses in. Nothing moves, nothing fades. */
+.nav-link,
+.btn,
+.card {
+  transition: box-shadow 120ms ease-out, background-color 120ms ease-out,
+    color 120ms ease-out;
+}
+
+.nav-link:hover {
+  color: var(--green-ink);
+}
+
+/* 5px -> 2px */
+.btn-sm:hover {
+  box-shadow: 2px 2px 0 var(--ink);
+}
+
+/* 6px -> 2px */
+.btn-md:hover {
+  box-shadow: 2px 2px 0 var(--ink);
+}
+
+/* 8px -> 3px, plus the pale hover ground */
+.card-door:hover {
+  box-shadow: 3px 3px 0 var(--ink);
+  background: var(--card-hover);
+}
+
+/* 10px -> 4px */
+.card-project:hover {
+  box-shadow: 4px 4px 0 var(--ink);
+}
+
+:focus-visible {
+  outline: 3px solid var(--green-ink);
+  outline-offset: 3px;
+}
+
+/* Visible to screen readers only — used for the results-table caption. */
+.sr-only {
+  position: absolute;
+  width: 1px;
+  height: 1px;
+  padding: 0;
+  margin: -1px;
+  overflow: hidden;
+  clip: rect(0, 0, 0, 0);
+  white-space: nowrap;
+  border: 0;
 }
