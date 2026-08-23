@@ -1,10 +1,16 @@
 import type { Metadata } from "next";
+import Header from "@/components/Header";
+import Footer from "@/components/Footer";
 import "./globals.css";
 
 export const metadata: Metadata = {
-  title: "David Haxton — Computer Science Tuition & Practical AI",
+  metadataBase: new URL("https://www.davidhaxton.co.uk"),
+  title: {
+    default: "David Haxton — Serious Computer Science, Practical AI",
+    template: "%s — David Haxton",
+  },
   description:
-    "One-to-one tuition for GCSE & A-Level computer science, AI tuition for adults at any level, web layout consultation, and free tools for teachers — built and tested in a real classroom.",
+    "One-to-one GCSE & A-Level computer science tuition, AI tuition for adults, and web work built end to end.",
 };
 
 export default function RootLayout({
@@ -13,7 +19,7 @@ export default function RootLayout({
   children: React.ReactNode;
 }) {
   return (
-    <html lang="en">
+    <html lang="en-GB">
       <head>
         <link rel="preconnect" href="https://fonts.googleapis.com" />
         <link
@@ -21,12 +27,28 @@ export default function RootLayout({
           href="https://fonts.gstatic.com"
           crossOrigin=""
         />
+        {/*
+          The no-page-custom-font rule targets the Pages Router; a <head> in
+          the App Router root layout applies to every route, so this does load
+          site-wide.
+        */}
+        {/* eslint-disable-next-line @next/next/no-page-custom-font */}
         <link
-          href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@500;600;700;800;900&family=Inter:wght@400;500;600;700&family=Caveat:wght@500;700&family=JetBrains+Mono:wght@400;500&display=swap"
+          href="https://fonts.googleapis.com/css2?family=Archivo:wght@400;500;600;700;800;900&display=swap"
           rel="stylesheet"
         />
       </head>
-      <body>{children}</body>
+      <body>
+        {/*
+          The whole document sits inside a 14px wrapper, so the header's border
+          and shadow float inset from the viewport edge.
+        */}
+        <div style={{ minHeight: "100vh", padding: 14 }}>
+          <Header />
+          {children}
+          <Footer />
+        </div>
+      </body>
     </html>
   );
 }
