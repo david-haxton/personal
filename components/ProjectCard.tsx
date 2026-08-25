@@ -1,11 +1,13 @@
 import { bodyCopy, button, card, displayTitle, greenInk, ink } from "./tokens";
 
 /**
- * A live build. The image area is a striped placeholder until the client
- * supplies real screenshots — keep the 16:10 ratio and the bottom border.
+ * A live build. Pass `image` to show a real screenshot; without one the card
+ * falls back to the striped placeholder. Either way the area keeps the 16:10
+ * ratio and the 3px bottom border.
  */
 export default function ProjectCard({
   href,
+  image,
   placeholder,
   label,
   title,
@@ -13,12 +15,18 @@ export default function ProjectCard({
   cta,
 }: {
   href: string;
+  image?: string;
   placeholder: string;
   label: string;
   title: string;
   body: string;
   cta: string;
 }) {
+  const frame = {
+    aspectRatio: "16 / 10",
+    borderBottom: `3px solid ${ink}`,
+  } as const;
+
   return (
     <a
       href={href}
@@ -31,29 +39,50 @@ export default function ProjectCard({
         flexDirection: "column",
       }}
     >
-      <span
-        style={{
-          aspectRatio: "16 / 10",
-          borderBottom: `3px solid ${ink}`,
-          background:
-            "repeating-linear-gradient(45deg, #EFF7EF 0 9px, #FFFFFF 9px 18px)",
-          display: "flex",
-          alignItems: "center",
-          justifyContent: "center",
-        }}
-      >
+      {image ? (
+        <span style={{ ...frame, display: "block", overflow: "hidden" }}>
+          {/*
+            alt="" because the card's own title and copy already name the
+            build — describing it again would only pad the link's name.
+          */}
+          {/* eslint-disable-next-line @next/next/no-img-element */}
+          <img
+            src={image}
+            alt=""
+            width={1600}
+            height={1000}
+            style={{
+              width: "100%",
+              height: "100%",
+              objectFit: "cover",
+              display: "block",
+            }}
+          />
+        </span>
+      ) : (
         <span
           style={{
-            fontSize: 12,
-            fontWeight: 700,
-            letterSpacing: "0.14em",
-            color: greenInk,
-            textTransform: "uppercase",
+            ...frame,
+            display: "flex",
+            alignItems: "center",
+            justifyContent: "center",
+            background:
+              "repeating-linear-gradient(45deg, #EFF7EF 0 9px, #FFFFFF 9px 18px)",
           }}
         >
-          [ {placeholder} screenshot ]
+          <span
+            style={{
+              fontSize: 12,
+              fontWeight: 700,
+              letterSpacing: "0.14em",
+              color: greenInk,
+              textTransform: "uppercase",
+            }}
+          >
+            [ {placeholder} screenshot ]
+          </span>
         </span>
-      </span>
+      )}
       <span
         style={{
           padding: "30px 28px",

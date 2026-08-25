@@ -50,6 +50,7 @@ phone.
 ## Still to do before launch
 
 - **Real screenshots** for the two `/web` project cards — they are striped
-  placeholders now. Keep the 16:10 ratio and the 3px bottom border.
+  placeholders until the files land. Drop them in `public/screenshots/` and
+  pass them via `ProjectCard`'s `image` prop; see the README in that folder.
 - **Self-host or subset Archivo.** It currently loads from Google Fonts via a
   `<link>` in `app/layout.tsx`.
