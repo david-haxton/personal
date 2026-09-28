@@ -129,8 +129,8 @@ export default function Tuition() {
           OCR J277 and H446 papers I teach day to day.
         </DetailCard>
         <DetailCard label="Focus" title="Where marks go">
-          Algorithms, systems, the NEA and exam craft — the four places a grade
-          7 quietly turns into a grade 9.
+          Algorithms, programming, systems and exam craft — the four places a
+          grade 7 quietly turns into a grade 9.
         </DetailCard>
         <DetailCard label="Approach" title="Straight feedback">
           No cut corners and no false praise. You&rsquo;ll always know exactly
