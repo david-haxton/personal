@@ -20,28 +20,8 @@ import {
 export const metadata: Metadata = {
   title: "Student tuition",
   description:
-    "One-to-one GCSE & A-Level computer science tuition. 97.2% of students graded 9–7 across a three-year average on OCR J277.",
+    "One-to-one GCSE & A-Level computer science tuition. My students average around 70 percentage points ahead of the national grade 9–7 rate on OCR J277.",
 };
-
-const RESULTS = [
-  { series: "2023", mine: "95.0%", national: "23.3%" },
-  { series: "2024", mine: "100%", national: "27.4%" },
-  { series: "2025", mine: "96.9%", national: "29.6%*" },
-];
-
-const headerCell = {
-  padding: "10px 10px",
-  fontSize: 11.5,
-  fontWeight: 700,
-  letterSpacing: "0.14em",
-  borderBottom: `3px solid ${ink}`,
-  textTransform: "uppercase",
-} as const;
-
-const bodyCell = {
-  padding: "13px 10px",
-  borderBottom: `1px solid ${ink}`,
-} as const;
 
 export default function Tuition() {
   return (
@@ -109,116 +89,28 @@ export default function Tuition() {
                 display: "inline-block",
               }}
             >
-              97.2%
+              +70
             </div>
-            <p
-              style={{
-                ...bodyCopy(19),
-                lineHeight: 1.45,
-                margin: "20px 0 0",
-                maxWidth: "30ch",
-              }}
-            >
-              of my students earned a grade 9–7. Three-year average, OCR J277 —
-              every candidate passed.
-            </p>
           </div>
 
           <div>
-            <table
-              style={{
-                width: "100%",
-                borderCollapse: "collapse",
-                fontSize: 16,
-              }}
-            >
-              <caption className="sr-only">
-                Grade 9–7 rate, my students against the national figure
-              </caption>
-              <thead>
-                <tr>
-                  <th scope="col" style={{ ...headerCell, textAlign: "left" }}>
-                    Series
-                  </th>
-                  <th scope="col" style={{ ...headerCell, textAlign: "right" }}>
-                    Mine
-                  </th>
-                  <th scope="col" style={{ ...headerCell, textAlign: "right" }}>
-                    National
-                  </th>
-                </tr>
-              </thead>
-              <tbody>
-                {RESULTS.map((row) => (
-                  <tr key={row.series}>
-                    <td style={{ ...bodyCell, fontWeight: 500 }}>
-                      {row.series}
-                    </td>
-                    <td
-                      style={{
-                        ...bodyCell,
-                        textAlign: "right",
-                        fontWeight: 800,
-                      }}
-                    >
-                      {row.mine}
-                    </td>
-                    <td
-                      style={{
-                        ...bodyCell,
-                        textAlign: "right",
-                        fontWeight: 500,
-                        color: muted,
-                      }}
-                    >
-                      {row.national}
-                    </td>
-                  </tr>
-                ))}
-                <tr>
-                  <td
-                    style={{
-                      padding: "13px 10px",
-                      fontWeight: 700,
-                      textTransform: "uppercase",
-                    }}
-                  >
-                    3-yr avg
-                  </td>
-                  <td
-                    style={{
-                      padding: "13px 10px",
-                      textAlign: "right",
-                      fontWeight: 800,
-                      background: greenPale,
-                    }}
-                  >
-                    97.2%
-                  </td>
-                  <td
-                    style={{
-                      padding: "13px 10px",
-                      textAlign: "right",
-                      fontWeight: 500,
-                      color: muted,
-                    }}
-                  >
-                    —
-                  </td>
-                </tr>
-              </tbody>
-            </table>
+            <p style={{ ...bodyCopy(20), maxWidth: "40ch" }}>
+              percentage points ahead of the national average for grade 9–7,
+              taken across three years of OCR J277. Every candidate passed.
+            </p>
             <p
               style={{
                 fontSize: 12.5,
                 fontWeight: 500,
                 lineHeight: 1.55,
                 color: muted,
-                margin: "16px 0 0",
+                margin: "20px 0 0",
+                maxWidth: "46ch",
               }}
             >
-              * 2025 = all boards combined; OCR-specific figure unavailable. On
-              2023 &amp; 2024 like-for-like, roughly 4× the national rate.
+              Measured against the national grade 9–7 rate for the same exam
+              series. The 2025 national figure covers all boards combined, as
+              an OCR-specific one wasn&rsquo;t published.
             </p>
           </div>
         </div>
