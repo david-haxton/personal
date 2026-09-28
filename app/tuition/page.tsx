@@ -95,7 +95,7 @@ export default function Tuition() {
 
           <div>
             <p style={{ ...bodyCopy(20), maxWidth: "40ch" }}>
-              percentage points ahead of the national average for grade 9–7,
+              Percentage points ahead of the national average for grade 9–7,
               taken across three years of OCR J277. Every candidate passed.
             </p>
             <p
