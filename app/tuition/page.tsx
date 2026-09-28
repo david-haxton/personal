@@ -2,6 +2,7 @@ import type { Metadata } from "next";
 import DetailCard from "@/components/DetailCard";
 import EmailButton from "@/components/EmailButton";
 import IntroBox from "@/components/IntroBox";
+import NotePanel from "@/components/NotePanel";
 import PageHero from "@/components/PageHero";
 import Sticker from "@/components/Sticker";
 import {
@@ -9,10 +10,8 @@ import {
   card,
   green,
   greenInk,
-  greenPale,
   highlight,
   highlightPale,
-  ink,
   muted,
   section,
 } from "@/components/tokens";
@@ -139,34 +138,28 @@ export default function Tuition() {
         </DetailCard>
       </section>
 
-      <section style={{ ...section, padding: "24px 20px 96px" }}>
-        <div
-          style={{
-            ...card(8),
-            background: greenPale,
-            padding: "36px 36px",
-          }}
-        >
-          <h2
-            style={{
-              fontSize: 13,
-              fontWeight: 700,
-              letterSpacing: "0.16em",
-              color: ink,
-              margin: "0 0 16px",
-              textTransform: "uppercase",
-            }}
-          >
-            A note for parents
-          </h2>
-          <p style={{ ...bodyCopy(20), maxWidth: "64ch" }}>
-            The gap between a grade 7 and a grade 9 is very often exam
-            technique, not subject knowledge — reading the command word,
-            structuring a longer answer, managing time under pressure.
-            That&rsquo;s specifically what I work on, alongside the content
-            itself.
-          </p>
-        </div>
+      <section
+        style={{
+          ...section,
+          padding: "24px 20px 96px",
+          display: "flex",
+          flexDirection: "column",
+          gap: 24,
+        }}
+      >
+        <NotePanel title="On price">
+          Computer science teaching isn&rsquo;t spread evenly. If your school
+          hasn&rsquo;t got a specialist and the standard rate is a stretch,
+          email me and we&rsquo;ll sort something out. It&rsquo;s a
+          conversation, not an application.
+        </NotePanel>
+
+        <NotePanel title="A note for parents" tone="highlight">
+          The gap between a grade 7 and a grade 9 is very often exam technique,
+          not subject knowledge — reading the command word, structuring a
+          longer answer, managing time under pressure. That&rsquo;s
+          specifically what I work on, alongside the content itself.
+        </NotePanel>
       </section>
     </main>
   );

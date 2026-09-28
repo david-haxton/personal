@@ -2,6 +2,7 @@ import type { Metadata } from "next";
 import DetailCard from "@/components/DetailCard";
 import EmailButton from "@/components/EmailButton";
 import IntroBox from "@/components/IntroBox";
+import NotePanel from "@/components/NotePanel";
 import PageHero from "@/components/PageHero";
 import Sticker from "@/components/Sticker";
 import {
@@ -17,7 +18,7 @@ import {
 export const metadata: Metadata = {
   title: "AI tuition for adults",
   description:
-    "One-to-one AI tuition for adults at any starting point — from your first ever prompt to workflows you can rely on at work.",
+    "One-to-one AI tuition for adults at any starting point — from your first ever prompt to workflows you can rely on at work. Free intro sessions for community hubs and local groups.",
 };
 
 export default function Ai() {
@@ -73,6 +74,14 @@ export default function Ai() {
           Sessions at your pace, aimed at what you actually do — not a generic
           course someone else wrote.
         </DetailCard>
+      </section>
+
+      <section style={{ ...section, padding: "24px 20px 0" }}>
+        <NotePanel title="Community hubs">
+          If you run a community hub, library or local group and want a free
+          intro-to-AI session, I&rsquo;ll come and run one. Start at zero, no
+          jargon, nothing to pay. Just email me.
+        </NotePanel>
       </section>
 
       <section style={{ ...section, padding: "24px 20px 96px" }}>
