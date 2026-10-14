@@ -22,7 +22,6 @@ export default function Island({ zoomTo }: { zoomTo?: Section }) {
   return (
     <div style={{ position: "absolute", inset: 0 }}>
       <dh-island
-        hrefhome="/"
         time="sunrise"
         spot="island-spot"
         zoomto={zoomTo}

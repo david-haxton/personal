@@ -54,7 +54,6 @@
   };
   var PINS = ["tuition", "ai", "web"];
   var LAKESIDE = "4,3", GATE = "5,10";
-  var HELLOS = ["Hello!", "Alright?", "Morning!", "Nice to meet you.", "Drop me a line."];
   /* Where visitors start and finish a walk: the three building doors, the park
      gate and the lakeside. Everything else is just path between them. */
   var STOPS = [ST.tuition.door.join(","), ST.ai.door.join(","), ST.web.door.join(","), GATE, LAKESIDE];
@@ -140,24 +139,6 @@
         el.addEventListener("blur", function () { if (self.focusId === id) { self.focusId = null; } });
         self.pinLayer.appendChild(el); self.pins[id] = el;
       });
-      var hm = this.homePin = document.createElement("a");
-      hm.href = self.getAttribute("hrefhome") || "https://www.davidhaxton.co.uk/";
-      hm.setAttribute("aria-label", "David Haxton — home");
-      hm.style.cssText = "position:absolute;left:0;top:0;transform:translate(-50%,-100%);pointer-events:auto;display:flex;align-items:center;padding:7px 16px;border-radius:999px;background:#1C1A3A;color:#F4F3FB;text-decoration:none;font:800 0.9rem " + FONT + ";letter-spacing:-0.01em;white-space:nowrap;box-shadow:0 6px 18px rgba(20,16,60,0.32);transition:background 0.2s,transform 0.25s cubic-bezier(.2,.8,.3,1.2)";
-      hm.innerHTML = 'David&nbsp;<span style="color:#FFB320">Haxton</span>';
-      hm.addEventListener("mouseenter", function () { hm.style.transform = "translate(-50%,-100%) scale(1.08)"; });
-      hm.addEventListener("mouseleave", function () { hm.style.transform = "translate(-50%,-100%)"; });
-      this.pinLayer.insertBefore(hm, this.pinLayer.firstChild);
-      /* Tap David and he stops for a moment to say hello. The bubble is DOM
-         rather than canvas so the text stays crisp at any zoom. */
-      var say = this.sayBubble = document.createElement("div");
-      say.style.cssText = "position:absolute;left:0;top:0;transform:translate(-50%,-100%);pointer-events:none;display:none;padding:5px 12px;border-radius:999px;background:#FFFFFF;color:#1C1A3A;font:700 0.82rem " + FONT + ";white-space:nowrap;box-shadow:0 6px 18px rgba(20,16,60,0.28)";
-      this.pinLayer.appendChild(say);
-      this.c.addEventListener("click", function (e) {
-        /* Ignore the click that ends a drag. */
-        if (self.dragMoved) { self.dragMoved = false; return; }
-        self.greetIfHit(e.clientX, e.clientY);
-      });
       this.onExtFocus = function (e) { self.focusId = e.detail || null; };
       window.addEventListener("dh-focus", this.onExtFocus);
       this.r = rng(1851); this.t = 0; this.focusId = null; this.w = 0; this.h = 0;
@@ -186,8 +167,7 @@
       ["tuition", "ai", "web"].forEach(function (kind) {
         for (var n = 0; n < mix[kind]; n++) { self.groups.push(self.newGroup(kind)); }
       });
-      this.david = this.newDavid();
-      this.groups.push(this.david);
+      this.groups.push(this.newDavid());
       this.last = performance.now();
       var loop = function (now) {
         if (!self.isConnected) { return; }
@@ -215,13 +195,12 @@
       c.style.cursor = "grab";
       c.addEventListener("pointerdown", function (e) {
         if (e.button) { return; }
-        self.dragging = true; self.dragX = e.clientX; self.dragA = self.angle; self.dragMoved = false;
+        self.dragging = true; self.dragX = e.clientX; self.dragA = self.angle;
         c.style.cursor = "grabbing";
         try { c.setPointerCapture(e.pointerId); } catch (err) { /* capture is best-effort */ }
       });
       c.addEventListener("pointermove", function (e) {
         if (!self.dragging) { return; }
-        if (Math.abs(e.clientX - self.dragX) > 4) { self.dragMoved = true; }
         self.angle = self.dragA + (e.clientX - self.dragX) * 0.006;
       });
       var release = function (e) {
@@ -239,7 +218,6 @@
         else if (e.key === "+" || e.key === "=") { self.targetZoom = clamp(self.targetZoom * 1.35, 0.6, 3); }
         else if (e.key === "-" || e.key === "_") { self.targetZoom = clamp(self.targetZoom / 1.35, 0.6, 3); }
         else if (e.key === "0") { self.targetAngle = 0; self.targetZoom = 1; }
-        else if (e.key === "Enter" || e.key === " ") { self.greet(); }
         else { return; }
         e.preventDefault();
       });
@@ -300,26 +278,8 @@
     /* Cache each pin's intrinsic size. They never change on their own — the
        zoom scaling is a transform, which does not affect offsetWidth. */
     measurePins() {
-      var all = [this.homePin].concat(PINS.map(function (id) { return this.pins[id]; }, this));
+      var all = PINS.map(function (id) { return this.pins[id]; }, this);
       all.forEach(function (el) { if (el) { el.__w = el.offsetWidth; el.__h = el.offsetHeight; } });
-    }
-    /* Did that tap land on David? Compare against where he was last drawn. */
-    greetIfHit(clientX, clientY) {
-      var d = this.david;
-      if (!d || d.inside) { return; }
-      var box = this.getBoundingClientRect();
-      var g = this.groupPos(d), q = this.P(iso(g.x, g.y, 10));
-      var dx = (clientX - box.left) - q.x, dy = (clientY - box.top) - q.y;
-      var reach = Math.max(18, 26 * this.s);
-      if (dx * dx + dy * dy > reach * reach) { return; }
-      this.greet();
-    }
-    greet() {
-      var d = this.david;
-      if (!d || d.inside) { return; }
-      this.sayText = HELLOS[(this.r() * HELLOS.length) | 0];
-      this.sayUntil = performance.now() + 2600;
-      d.wait = Math.max(d.wait, 2.6);          /* he stops to talk */
     }
     /* Where a group is on its current segment, in grid coords. Used by both
        the draw pass and the name tag that follows David. */
@@ -621,23 +581,6 @@
         var half = (el.__w || 0) / 2 + 6, lo = self.sr.x + half, hi = self.sr.x + self.sr.w - half;
         return hi > lo ? clamp(x, lo, hi) : x;
       };
-      /* The name tag floats over David rather than over the gate. It follows
-         him exactly — no penning — so it never detaches from the figure, and
-         instead hides when he is indoors or has walked out of the park's
-         column, which is what kept pins off the headline. */
-      var gb = reduce ? 0 : Math.sin(self.t * 2 + 1.3) * 2.5;
-      var dg = self.david, dq = dg ? self.P(iso(self.groupPos(dg).x, self.groupPos(dg).y, 30)) : null;
-      var halfTag = (self.homePin.__w || 0) / 2;
-      var tagOk = !!dq && !dg.inside && dq.x - halfTag >= self.sr.x && dq.x + halfTag <= self.sr.x + self.sr.w;
-      self.homePin.style.display = tagOk ? "flex" : "none";
-      if (tagOk) { self.homePin.style.left = dq.x + "px"; self.homePin.style.top = (dq.y + gb) + "px"; }
-      var saying = tagOk && self.sayUntil && performance.now() < self.sayUntil;
-      self.sayBubble.style.display = saying ? "block" : "none";
-      if (saying) {
-        self.sayBubble.textContent = self.sayText;
-        self.sayBubble.style.left = dq.x + "px";
-        self.sayBubble.style.top = (dq.y + gb - (self.homePin.__h || 0) - 8) + "px";
-      }
       PINS.forEach(function (id) {
         var a = ST[id], q = self.P(iso(a.gx, a.gy, a.top + 14)), el = self.pins[id], zt = self.getAttribute("zoomto"), on = (self.focusId || zt) === id;
         el.style.display = zt && zt !== id ? "none" : "flex";

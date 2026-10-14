@@ -14,18 +14,22 @@ export default function SiteFooter() {
         fontSize: "0.92rem",
       }}
     >
-      <span
+      <a
+        href="/"
         style={{
           fontFamily: display,
           fontWeight: 800,
           marginRight: "auto",
           whiteSpace: "nowrap",
           flex: "0 0 auto",
+          color: page,
+          textDecoration: "none",
         }}
       >
         David <span style={{ color: amber }}>Haxton</span>
-      </span>
+      </a>
       <nav aria-label="Footer" style={{ display: "flex", gap: 18 }}>
+        <a href="/" style={{ color: page }}>Home</a>
         <a href="/tuition" style={{ color: page }}>Tuition</a>
         <a href="/ai" style={{ color: page }}>AI</a>
         <a href="/web" style={{ color: page }}>Web</a>

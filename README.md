@@ -18,6 +18,10 @@ Open [http://localhost:3000](http://localhost:3000).
 | Route | Page | Purpose |
 |---|---|---|
 | `/` | Home (chooser) | Name, headline, three doors. Nothing else. |
+
+Both bars carry **Home** as a nav item, and both wordmarks link to `/`, so
+there are four routes back to the landing page from anywhere. The header pill
+takes the amber fill for the page you are on, Home included.
 | `/tuition` | Student tuition | GCSE & A-Level. Carries the results figure and the note for parents. |
 | `/ai` | AI for adults | One-to-one sessions, plus free intro sessions for community hubs. |
 | `/web` | Web design | Two live builds and how-I-work. |
@@ -127,24 +131,14 @@ One walker is David himself — `newDavid()`, a single bald, dark-bearded figure
 spawned on every page. He has no home building, so he visits all three evenly
 rather than favouring one. `person()` grew a `beard` option for him: the mirror
 of the existing hair cap, drawn across the lower half of the head. His skin
-tone is `SKIN[0]`; change that one value in `newDavid()` to adjust it.
+tone is `SKIN[0]`; change that one value in `newDavid()` to adjust it. He is
+scenery only — no tag, nothing to click.
 
-The **name tag floats over him** rather than sitting on the gate, following him
-exactly so it never detaches — it hides instead when he goes indoors or walks
-out of the park's column, which is what keeps pins off the headline. It still
-links home.
+Pin sizes are cached on the elements (`__w`) by `measurePins()` and re-taken
+only when the canvas resizes; reading `offsetWidth` inside the draw loop forced
+a synchronous reflow between style writes.
 
-**Tap him and he stops to say hello.** He is painted on canvas, not a DOM node,
-so `greetIfHit()` projects his current position and tests the click against it;
-the bubble itself is DOM so the text stays crisp at any zoom. A drag sets
-`dragMoved` and is ignored, so spinning the park never trips the greeting, and
-Enter or Space greets from the keyboard. Lines live in `HELLOS`, and this one
-works on every page, not just the homepage.
 
-Pin sizes are cached on the elements (`__w` / `__h`) by `measurePins()` and
-re-taken only when the canvas resizes. Reading `offsetWidth` inside the draw
-loop forced a synchronous reflow between style writes, thrashing layout every
-frame.
 
 Arriving at one of the three buildings, a group goes **inside** — `g.inside` is
 set for the duration of the wait and `draw()` skips them — then comes back out

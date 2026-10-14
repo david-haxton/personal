@@ -13,7 +13,6 @@ declare global {
           spot?: string;
           zoomto?: string;
           interactive?: string;
-          hrefhome?: string;
           hreftuition?: string;
           hrefai?: string;
           hrefweb?: string;
