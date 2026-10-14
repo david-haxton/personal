@@ -123,6 +123,12 @@ picks a new one on arrival, never where the group already is, favouring its own
 section's building. They spawn standing at a door rather than mid-path, with
 staggered waits so they don't all set off at once.
 
+One walker is David himself — `newDavid()`, a single bald, dark-bearded figure
+spawned on every page. He has no home building, so he visits all three evenly
+rather than favouring one. `person()` grew a `beard` option for him: the mirror
+of the existing hair cap, drawn across the lower half of the head. His skin
+tone is `SKIN[0]`; change that one value in `newDavid()` to adjust it.
+
 Arriving at one of the three buildings, a group goes **inside** — `g.inside` is
 set for the duration of the wait and `draw()` skips them — then comes back out
 of the same door when the wait ends. The gate and the lakeside are open air, so

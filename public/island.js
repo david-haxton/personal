@@ -175,6 +175,7 @@
       ["tuition", "ai", "web"].forEach(function (kind) {
         for (var n = 0; n < mix[kind]; n++) { self.groups.push(self.newGroup(kind)); }
       });
+      this.groups.push(this.newDavid());
       this.last = performance.now();
       var loop = function (now) {
         if (!self.isConnected) { return; }
@@ -281,6 +282,18 @@
       var home = ST[kind].door.join(",");
       var start = r() < 0.55 ? home : this.nextStop(null, home);
       return { kind: kind, home: home, inside: !!INDOORS[start], route: route(start, this.nextStop(start, home)), i: 0, f: 0, speed: (kind === "tuition" ? 0.45 : 0.55) + r() * 0.4, wait: r() * 6, members: m, jx: r() * 0.4 - 0.2, jy: r() * 0.4 - 0.2 };
+    }
+    /* The man himself: one bald, dark-bearded figure doing the rounds. No home
+       building, so he visits all three evenly rather than favouring one. */
+    newDavid() {
+      var r = this.r.bind(this), start = this.nextStop(null, null);
+      return {
+        kind: "david", home: null, inside: !!INDOORS[start],
+        route: route(start, this.nextStop(start, null)), i: 0, f: 0,
+        speed: 0.62 + r() * 0.18, wait: r() * 3,
+        members: [{ b: "#1C1A3A", h: SKIN[0], beard: "#241A14", sc: 1.06, ox: 0, oy: 0 }],
+        jx: r() * 0.3 - 0.15, jy: r() * 0.3 - 0.15
+      };
     }
     /* Pick somewhere to walk to, never where we already are. A group favours
        its own section's building but does the rounds of the whole park. */
@@ -451,6 +464,8 @@
       x.fillStyle = m.b; x.beginPath(); x.ellipse(p.x, p.y - r * 1.3, r * 0.85, r * 1.3, 0, 0, Math.PI * 2); x.fill();
       x.fillStyle = m.h; x.beginPath(); x.arc(p.x, p.y - r * 3, r * 0.75, 0, Math.PI * 2); x.fill();
       if (m.hair) { x.fillStyle = m.hair; x.beginPath(); x.arc(p.x, p.y - r * 3.1, r * 0.8, Math.PI, 0); x.fill(); }
+      /* Beard is the hair cap mirrored: lower half of the head, no crown. */
+      if (m.beard) { x.fillStyle = m.beard; x.beginPath(); x.arc(p.x, p.y - r * 2.9, r * 0.78, 0, Math.PI); x.fill(); }
       if (m.laptop) { x.fillStyle = "#3A3A48"; x.fillRect(p.x - r * 0.95, p.y - r * 1.75, r * 1.9, r * 0.5); x.fillStyle = "#9FE3DA"; x.fillRect(p.x - r * 0.7, p.y - r * 1.68, r * 1.4, r * 0.2); }
       if (m.bubble && (reduce || Math.sin(this.t * 0.9 + m.seed) > 0.55)) {
         var bx = p.x + r * 1.7, by = p.y - r * 5.2, br = Math.max(4, r * 1.35);
