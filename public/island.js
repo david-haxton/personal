@@ -57,6 +57,10 @@
   /* Where visitors start and finish a walk: the three building doors, the park
      gate and the lakeside. Everything else is just path between them. */
   var STOPS = [ST.tuition.door.join(","), ST.ai.door.join(","), ST.web.door.join(","), GATE, LAKESIDE];
+  /* Of those, the ones you can actually go inside. Visitors vanish through
+     these doors while they wait, instead of loitering on the step. */
+  var INDOORS = {};
+  INDOORS[ST.tuition.door.join(",")] = 1; INDOORS[ST.ai.door.join(",")] = 1; INDOORS[ST.web.door.join(",")] = 1;
   var TREES = [[0, 6], [0, 8], [1, 9], [0, 10], [2, 10], [1, 5], [3, 9], [8, 10], [9, 9], [10, 8], [10, 5], [10, 10], [7, 0], [5, 0], [6, 1], [3, 5], [8, 5], [10, 3], [7, 9], [4, 0], [4, 1], [9, 5], [0, 5]];
   var LAMPS = [[5, 4], [5, 6], [5, 9], [4, 7], [6, 6]];
 
@@ -192,7 +196,7 @@
     interactive() {
       var self = this, c = this.c, QUARTER = Math.PI / 2;
       this.tabIndex = 0;
-      this.setAttribute("aria-label", "Map of the park. Drag, or use the left and right arrow keys, to turn it.");
+      this.setAttribute("aria-label", "Map of the park. Drag or use the arrow keys to turn it; plus and minus to zoom; 0 to reset.");
       /* pan-y keeps a vertical swipe scrolling the page on a phone. */
       c.style.touchAction = "pan-y";
       c.style.cursor = "grab";
@@ -217,6 +221,10 @@
       this.addEventListener("keydown", function (e) {
         if (e.key === "ArrowLeft") { self.targetAngle -= QUARTER; }
         else if (e.key === "ArrowRight") { self.targetAngle += QUARTER; }
+        /* Zoom stays keyboard-reachable even though the buttons are gone. */
+        else if (e.key === "+" || e.key === "=") { self.targetZoom = clamp(self.targetZoom * 1.35, 0.6, 3); }
+        else if (e.key === "-" || e.key === "_") { self.targetZoom = clamp(self.targetZoom / 1.35, 0.6, 3); }
+        else if (e.key === "0") { self.targetAngle = 0; self.targetZoom = 1; }
         else { return; }
         e.preventDefault();
       });
@@ -272,7 +280,7 @@
          them all setting off at once. */
       var home = ST[kind].door.join(",");
       var start = r() < 0.55 ? home : this.nextStop(null, home);
-      return { kind: kind, home: home, route: route(start, this.nextStop(start, home)), i: 0, f: 0, speed: (kind === "tuition" ? 0.45 : 0.55) + r() * 0.4, wait: r() * 6, members: m, jx: r() * 0.4 - 0.2, jy: r() * 0.4 - 0.2 };
+      return { kind: kind, home: home, inside: !!INDOORS[start], route: route(start, this.nextStop(start, home)), i: 0, f: 0, speed: (kind === "tuition" ? 0.45 : 0.55) + r() * 0.4, wait: r() * 6, members: m, jx: r() * 0.4 - 0.2, jy: r() * 0.4 - 0.2 };
     }
     /* Pick somewhere to walk to, never where we already are. A group favours
        its own section's building but does the rounds of the whole park. */
@@ -285,6 +293,7 @@
       this.t += dt; var self = this;
       this.groups.forEach(function (g) {
         if (g.wait > 0) { g.wait -= dt; return; }
+        g.inside = false;                       /* wait over — back out the door */
         g.f += dt * g.speed * 1.4;
         while (g.f >= 1) {
           g.f -= 1; g.i++;
@@ -292,6 +301,7 @@
             /* Arrived somewhere: pause at the door, then walk to another one. */
             var here = g.route[g.route.length - 1].join(",");
             g.route = route(here, self.nextStop(here, g.home)); g.i = 0; g.f = 0;
+            g.inside = !!INDOORS[here];          /* step inside while waiting */
             g.wait = (here === g.home ? 2.5 : 1.2) + self.r() * 2.5; return;
           }
         }
@@ -521,6 +531,7 @@
       TREES.forEach(function (t) { objs.push({ d: depth(t[0], t[1]) + 1, f: function () { self.tree(t[0], t[1], night); } }); });
       LAMPS.forEach(function (l) { objs.push({ d: depth(l[0], l[1]) + 1, f: function () { self.box(l[0] + 0.15, l[1] + 0.15, 0.06, 0.06, 26, [60, 60, 80]); self.circle(iso(l[0] + 0.15, l[1] + 0.15, 28), 3.5, lit ? "#FFE08A" : "#D8D8E8"); } }); });
       this.groups.forEach(function (gp) {
+        if (gp.inside) { return; }
         var a = gp.route[Math.min(gp.i, gp.route.length - 1)], b = gp.route[Math.min(gp.i + 1, gp.route.length - 1)];
         var bx = lerp(a[0], b[0], gp.f) + 0.5 + gp.jx, by = lerp(a[1], b[1], gp.f) + 0.5 + gp.jy;
         gp.members.forEach(function (m) { var px = bx + m.ox, py = by + m.oy; objs.push({ d: depth(px, py), f: function () { self.person(px, py, m); } }); });

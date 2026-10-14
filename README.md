@@ -73,7 +73,18 @@ The element listens on two window events, so nothing needs a ref to it:
 - `dh-motion` — `detail` takes `{ on: true | false }` to force the park moving
   or still, or `{}` to go back to following the system preference.
 
-`components/IslandControls.tsx` is the only caller of both.
+`components/IslandControls.tsx` is the only caller of both, and it deliberately
+renders **only** a Pause/Animate button. Spinning and zooming are left
+undocumented on the page so finding them is a small reward; motion that runs
+indefinitely still needs a visible way to stop it, so that control stays.
+
+Because the element registers its `dh-motion` listener only when `island.js`
+upgrades it — after React's effects run — the control waits on
+`customElements.whenDefined("dh-island")` before replaying a saved preference.
+Without that the park stayed frozen while the button claimed to be playing.
+
+With the buttons gone, the park stays keyboard-operable while focused: left and
+right arrows turn it a quarter, `+` / `-` zoom, `0` resets.
 
 The wheel zooms when the cursor is over the park, sharing one zoom state with
 the buttons. It only swallows the event while the zoom is actually changing —
@@ -111,6 +122,12 @@ the three building doors, the park gate and the lakeside — and `nextStop()`
 picks a new one on arrival, never where the group already is, favouring its own
 section's building. They spawn standing at a door rather than mid-path, with
 staggered waits so they don't all set off at once.
+
+Arriving at one of the three buildings, a group goes **inside** — `g.inside` is
+set for the duration of the wait and `draw()` skips them — then comes back out
+of the same door when the wait ends. The gate and the lakeside are open air, so
+visitors just pause there. Between 16 and 25 of the ~30 figures are visible at
+any moment, so the park never empties.
 
 ## Still to do before launch
 
