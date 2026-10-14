@@ -548,13 +548,20 @@
         x.globalCompositeOperation = "source-over";
         if (!reduce || true) { var on2 = reduce || Math.sin(this.t * 2.2) > -0.2; if (on2) { this.circle(iso(9.5, 1.5, 257), 3.2, "#FF6B5E"); } }
       }
+      /* Keep a pin inside the column the park is framed in. Zoomed in on a
+         subpage the gate drifts a long way from the landmark, and the home pin
+         ended up sitting on top of the headline. */
+      var penX = function (el, x) {
+        var half = el.offsetWidth / 2 + 6, lo = self.sr.x + half, hi = self.sr.x + self.sr.w - half;
+        return hi > lo ? clamp(x, lo, hi) : x;
+      };
       var gq = self.P(iso(ST.gate.gx, ST.gate.gy, 94)), gb = reduce ? 0 : Math.sin(self.t * 2 + 1.3) * 2.5;
-      self.homePin.style.left = gq.x + "px"; self.homePin.style.top = (gq.y + gb) + "px";
+      self.homePin.style.left = penX(self.homePin, gq.x) + "px"; self.homePin.style.top = (gq.y + gb) + "px";
       PINS.forEach(function (id) {
         var a = ST[id], q = self.P(iso(a.gx, a.gy, a.top + 14)), el = self.pins[id], zt = self.getAttribute("zoomto"), on = (self.focusId || zt) === id;
         el.style.display = zt && zt !== id ? "none" : "flex";
         var bob = reduce ? 0 : Math.sin(self.t * 2 + a.gx) * 2.5;
-        el.style.left = q.x + "px"; el.style.top = (q.y + bob) + "px";
+        el.style.left = penX(el, q.x) + "px"; el.style.top = (q.y + bob) + "px";
         el.style.background = on ? "#FFB320" : "rgba(255,255,255,0.95)";
         /* Pins are DOM, so they don't scale with the canvas. Track the viewer's
            zoom gently (sqrt) so they neither swamp the park nor vanish. */

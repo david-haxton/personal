@@ -54,6 +54,21 @@ export default function Home() {
         }}
       >
         <Island />
+        {/*
+          Legibility scrim: darkens the park behind the copy so the headline
+          holds up over the busy art. No z-index, and it sits before the content
+          in the DOM, so the text paints above it and the pins above that.
+        */}
+        <div
+          aria-hidden="true"
+          style={{
+            position: "absolute",
+            inset: 0,
+            pointerEvents: "none",
+            background:
+              "linear-gradient(90deg, rgba(28,26,58,0.58) 0%, rgba(28,26,58,0.42) 34%, rgba(28,26,58,0) 62%)",
+          }}
+        />
         <div
           style={{
             position: "relative",
