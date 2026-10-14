@@ -1,114 +1,229 @@
-import Link from "next/link";
-import Sticker from "@/components/Sticker";
+import Island from "@/components/Island";
+import SiteFooter from "@/components/SiteFooter";
+import SiteHeader from "@/components/SiteHeader";
 import {
-  bodyCopy,
-  button,
-  card,
-  displayTitle,
-  eyebrow,
-  highlight,
-  mutedBody,
-  section,
+  amber,
+  coral,
+  cream,
+  display,
+  gutter,
+  ink,
+  muted,
+  sky,
+  teal,
 } from "@/components/tokens";
 
 const DOORS = [
   {
     href: "/tuition",
-    label: "01 — Tuition",
+    number: "01",
+    kicker: "Tuition",
     title: "Student tuition",
     body: "GCSE & A-Level, one to one. Grade 9 and A* work, exam technique included.",
+    accent: amber,
   },
   {
     href: "/ai",
-    label: "02 — AI",
-    title: "AI tuition for adults",
-    body: "From your first ever prompt to workflows you can rely on. No daft questions.",
+    number: "02",
+    kicker: "AI",
+    title: "AI for adults",
+    body: "From your first ever prompt to workflows you can rely on. Ask anything.",
+    accent: teal,
   },
   {
     href: "/web",
-    label: "03 — Web",
+    number: "03",
+    kicker: "Web",
     title: "Web design",
     body: "Two live builds, made end to end. Proof of craft, not a sales pitch.",
+    accent: coral,
   },
 ];
 
 export default function Home() {
   return (
-    <main>
-      <section
-        style={{ ...section, padding: "56px 20px 44px", textAlign: "center" }}
-      >
-        <h1
-          style={{
-            fontWeight: 800,
-            fontSize: "clamp(2.4rem, 6.6vw, 5rem)",
-            lineHeight: 0.9,
-            letterSpacing: "-0.035em",
-            textTransform: "uppercase",
-          }}
-        >
-          <span style={highlight}>Serious</span>
-          <br />
-          computer science.
-          <br />
-          <Sticker src="/stickers/char-1.png" />
-          Practical AI.
-        </h1>
-        <p
-          style={{
-            fontSize: 18,
-            fontWeight: 500,
-            lineHeight: 1.5,
-            margin: "26px auto 0",
-            color: mutedBody,
-          }}
-        >
-          I teach computer science, and I build things.
-          <br />
-          Pick the door that fits you.
-        </p>
-      </section>
-
+    <>
+      <SiteHeader />
       <section
         style={{
-          ...section,
-          padding: "0 20px 40px",
+          position: "relative",
+          overflow: "hidden",
+          background: sky,
+          color: "#FFFFFF",
+        }}
+      >
+        <Island />
+        <div
+          style={{
+            position: "relative",
+            maxWidth: 1200,
+            margin: "0 auto",
+            display: "flex",
+            flexWrap: "wrap",
+            alignItems: "center",
+            gap: "0 24px",
+            padding: `clamp(36px, 7vh, 80px) ${gutter} clamp(80px, 12vh, 110px)`,
+            pointerEvents: "none",
+          }}
+        >
+          <div style={{ flex: "1 1 400px", minWidth: 0, pointerEvents: "auto" }}>
+            <p
+              style={{
+                margin: "0 0 16px",
+                fontWeight: 800,
+                fontSize: "0.82rem",
+                textTransform: "uppercase",
+                letterSpacing: "0.14em",
+                textShadow: "0 2px 14px rgba(20, 16, 60, 0.55)",
+              }}
+            >
+              Computer science teacher · Builder
+            </p>
+            <h1
+              style={{
+                fontFamily: display,
+                fontWeight: 800,
+                fontSize: "clamp(2.2rem, 5vw, 4.2rem)",
+                letterSpacing: "-0.03em",
+                lineHeight: 1.02,
+                margin: "0 0 22px",
+                maxWidth: "13ch",
+                textWrap: "balance",
+                textShadow: "0 3px 22px rgba(20, 16, 60, 0.5)",
+              }}
+            >
+              Serious computer science. Practical AI.
+            </h1>
+            <p
+              style={{
+                margin: 0,
+                fontSize: "clamp(1.08rem, 1.5vw, 1.25rem)",
+                maxWidth: "34ch",
+                textShadow: "0 2px 14px rgba(20, 16, 60, 0.6)",
+              }}
+            >
+              I teach computer science, and I build things. Pick where
+              you&rsquo;d like to start.
+            </p>
+          </div>
+          <div
+            id="island-spot"
+            style={{ flex: "1 1 420px", minWidth: 0, height: "clamp(300px, 46vh, 460px)" }}
+          />
+        </div>
+      </section>
+
+      <main
+        style={{
+          position: "relative",
+          zIndex: 1,
+          maxWidth: 1100,
+          margin: "-56px auto 0",
+          padding: `0 ${gutter} 80px`,
           display: "grid",
-          gridTemplateColumns: "repeat(auto-fit, minmax(min(290px, 100%), 1fr))",
-          gap: 22,
+          gap: 18,
         }}
       >
         {DOORS.map((door) => (
-          <Link
+          <a
             key={door.href}
             href={door.href}
-            className="card card-door"
             style={{
-              ...card(8),
-              padding: "26px 26px 24px",
               display: "flex",
-              flexDirection: "column",
-              gap: 12,
+              background: cream,
+              color: ink,
+              borderRadius: 18,
+              textDecoration: "none",
+              overflow: "hidden",
+              boxShadow: "0 12px 34px rgba(20, 16, 60, 0.14)",
             }}
           >
-            <span style={eyebrow}>{door.label}</span>
-            <span style={displayTitle(30, 0.98)}>{door.title}</span>
-            <span style={bodyCopy(16.5)}>{door.body}</span>
-            <span
+            <div
               style={{
-                ...button(null),
-                marginTop: "auto",
-                alignSelf: "flex-start",
-                fontSize: 14,
-                letterSpacing: "0.06em",
-                padding: "11px 18px",
+                flex: "0 0 auto",
+                width: 126,
+                display: "flex",
+                flexDirection: "column",
+                alignItems: "center",
+                justifyContent: "center",
+                textAlign: "center",
+                padding: 10,
+                background: door.accent,
               }}
             >
-              Enter →
-            </span>
-          </Link>
+              <b
+                style={{
+                  fontFamily: display,
+                  fontWeight: 800,
+                  fontSize: "2rem",
+                  letterSpacing: "-0.035em",
+                  lineHeight: 1,
+                }}
+              >
+                {door.number}
+              </b>
+              <small
+                style={{
+                  fontSize: "0.72rem",
+                  fontWeight: 800,
+                  textTransform: "uppercase",
+                  letterSpacing: "0.08em",
+                  marginTop: 4,
+                }}
+              >
+                {door.kicker}
+              </small>
+            </div>
+            <div
+              style={{
+                flex: "1 1 0",
+                minWidth: 0,
+                padding: "22px clamp(18px, 3vw, 30px)",
+                display: "flex",
+                flexWrap: "wrap",
+                alignItems: "center",
+                gap: "12px 20px",
+              }}
+            >
+              <div style={{ flex: "1 1 300px", minWidth: 0 }}>
+                <h2
+                  style={{
+                    fontFamily: display,
+                    fontWeight: 800,
+                    fontSize: "1.45rem",
+                    letterSpacing: "-0.02em",
+                    lineHeight: 1.1,
+                    margin: "0 0 6px",
+                  }}
+                >
+                  {door.title}
+                </h2>
+                <p style={{ margin: 0, color: muted, textWrap: "pretty" }}>
+                  {door.body}
+                </p>
+              </div>
+              <span
+                className="btn-amber"
+                style={{
+                  display: "inline-flex",
+                  alignItems: "center",
+                  gap: 8,
+                  padding: "10px 22px",
+                  borderRadius: 999,
+                  background: ink,
+                  color: "#FFFFFF",
+                  fontWeight: 800,
+                  marginLeft: "auto",
+                  whiteSpace: "nowrap",
+                }}
+              >
+                Enter →
+              </span>
+            </div>
+          </a>
         ))}
-      </section>
-    </main>
+      </main>
+      <SiteFooter />
+    </>
   );
 }

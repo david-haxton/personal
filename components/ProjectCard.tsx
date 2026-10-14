@@ -1,123 +1,116 @@
-import { bodyCopy, button, card, displayTitle, greenInk, ink } from "./tokens";
+import { cream, display, ink, muted, page } from "./tokens";
 
-/**
- * A live build. Pass `image` to show a real screenshot; without one the card
- * falls back to the striped placeholder. Either way the area keeps the 16:10
- * ratio and the 3px bottom border.
- */
+/** A live build: screenshot, coloured index bar, then the write-up. */
 export default function ProjectCard({
   href,
   image,
-  placeholder,
-  label,
+  alt,
+  index,
+  barColor,
   title,
   body,
   cta,
 }: {
   href: string;
-  image?: string;
-  placeholder: string;
-  label: string;
+  image: string;
+  alt: string;
+  index: string;
+  barColor: string;
   title: string;
   body: string;
   cta: string;
 }) {
-  const frame = {
-    aspectRatio: "16 / 10",
-    borderBottom: `3px solid ${ink}`,
-  } as const;
-
   return (
     <a
       href={href}
       target="_blank"
       rel="noopener"
-      className="card card-project"
       style={{
-        ...card(10),
         display: "flex",
         flexDirection: "column",
+        background: cream,
+        color: ink,
+        textDecoration: "none",
+        borderRadius: 20,
+        overflow: "hidden",
+        boxShadow: "0 12px 34px rgba(20, 16, 60, 0.22)",
       }}
     >
-      {image ? (
-        <span style={{ ...frame, display: "block", overflow: "hidden" }}>
-          {/*
-            alt="" because the card's own title and copy already name the
-            build — describing it again would only pad the link's name.
-          */}
-          {/* eslint-disable-next-line @next/next/no-img-element */}
-          <img
-            src={image}
-            alt=""
-            width={1600}
-            height={1000}
-            style={{
-              width: "100%",
-              height: "100%",
-              objectFit: "cover",
-              display: "block",
-            }}
-          />
-        </span>
-      ) : (
-        <span
+      <div style={{ position: "relative", height: 240, background: ink }}>
+        {/* eslint-disable-next-line @next/next/no-img-element */}
+        <img
+          src={image}
+          alt={alt}
+          width={760}
+          height={330}
           style={{
-            ...frame,
-            display: "flex",
-            alignItems: "center",
-            justifyContent: "center",
-            background:
-              "repeating-linear-gradient(45deg, #EFF7EF 0 9px, #FFFFFF 9px 18px)",
+            display: "block",
+            width: "100%",
+            height: "100%",
+            objectFit: "cover",
+            objectPosition: "left top",
           }}
-        >
-          <span
-            style={{
-              fontSize: 12,
-              fontWeight: 700,
-              letterSpacing: "0.14em",
-              color: greenInk,
-              textTransform: "uppercase",
-            }}
-          >
-            [ {placeholder} screenshot ]
-          </span>
-        </span>
-      )}
-      <span
+        />
+      </div>
+      <div
         style={{
-          padding: "30px 28px",
           display: "flex",
-          flexDirection: "column",
-          gap: 14,
-          flex: 1,
+          alignItems: "center",
+          gap: 10,
+          padding: "10px 22px",
+          background: barColor,
+          fontWeight: 800,
+          fontSize: "0.8rem",
+          textTransform: "uppercase",
+          letterSpacing: "0.08em",
         }}
       >
-        <span
-          style={{
-            fontSize: 12.5,
-            fontWeight: 700,
-            letterSpacing: "0.16em",
-            color: greenInk,
-            textTransform: "uppercase",
-          }}
-        >
-          {label}
+        <span style={{ fontFamily: display, fontSize: "0.9rem", letterSpacing: "-0.02em" }}>
+          {index}
         </span>
-        <span style={displayTitle(34, 0.98)}>{title}</span>
-        <span style={bodyCopy(17)}>{body}</span>
+        Live build
+      </div>
+      <div
+        style={{
+          flex: "1 1 0",
+          display: "flex",
+          flexDirection: "column",
+          gap: 16,
+          padding: "22px 24px 24px",
+          borderTop: "3px dashed rgba(28, 26, 58, 0.3)",
+        }}
+      >
+        <div>
+          <h2
+            style={{
+              fontFamily: display,
+              fontWeight: 800,
+              fontSize: "clamp(1.3rem, 2.4vw, 1.7rem)",
+              letterSpacing: "-0.02em",
+              lineHeight: 1.1,
+              margin: "0 0 8px",
+            }}
+          >
+            {title}
+          </h2>
+          <p style={{ margin: 0, color: muted, textWrap: "pretty" }}>{body}</p>
+        </div>
         <span
           style={{
-            ...button(null),
             marginTop: "auto",
             alignSelf: "flex-start",
-            fontSize: 14,
-            letterSpacing: "0.04em",
-            padding: "11px 18px",
+            display: "inline-flex",
+            alignItems: "center",
+            padding: "9px 20px",
+            borderRadius: 999,
+            background: ink,
+            color: page,
+            fontWeight: 800,
           }}
         >
           {cta}
         </span>
-      </span>
+      </div>
     </a>
   );
 }
