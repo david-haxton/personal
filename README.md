@@ -57,10 +57,30 @@ a canvas and positions the map pins itself, reading its attributes:
 | `time` | Lighting preset (`sunrise`) |
 | `spot` | Id of the element to centre the park on — always `island-spot` |
 | `zoomto` | Which landmark to zoom to (`tuition` / `ai` / `web`); omitted on home |
+| `interactive` | Present on the homepage only: drag to spin, arrow keys to step a quadrant |
 | `hrefhome`, `hreftuition`, `hrefai`, `hrefweb` | Where each pin links |
 
 React renders the element empty and never touches its children. `components/Island.tsx`
 picks the right attributes per page; `types/global.d.ts` declares the element for TSX.
+
+#### Driving the camera
+
+The element listens on two window events, so nothing needs a ref to it:
+
+- `dh-focus` — `detail` is a station id, which highlights that landmark.
+- `dh-camera` — `detail` takes `{ spin: ±1 }` to turn a quarter, `{ zoom: ±1 }`
+  to step the zoom, or `{ reset: true }` to return to the default view.
+  `components/IslandControls.tsx` is the only caller.
+
+The park is drawn at a fixed 45° isometric, and `box()` only ever paints the
+two walls of a building that face the camera. Rotation therefore snaps to the
+four corner views: which two walls are drawn is chosen from the rotated normal,
+and the original hand-tuned shade constants are assigned by screen orientation
+rather than by axis, so the art is identical at every quadrant. Free 360°
+rotation would mean rebuilding those primitives around a real lighting model.
+
+Dragging works under `prefers-reduced-motion` — only the easing is suppressed,
+so the view snaps between quadrants instead of gliding.
 
 ## Still to do before launch
 

@@ -1,4 +1,5 @@
 import Island from "@/components/Island";
+import IslandControls from "@/components/IslandControls";
 import SiteFooter from "@/components/SiteFooter";
 import SiteHeader from "@/components/SiteHeader";
 import {
@@ -105,6 +106,7 @@ export default function Home() {
               I teach computer science, and I build things. Pick where
               you&rsquo;d like to start.
             </p>
+            <IslandControls />
           </div>
           <div
             id="island-spot"

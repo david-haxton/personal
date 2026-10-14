@@ -1,9 +1,33 @@
-/* <dh-island> — isometric Crystal Palace Park map for the hero. Attributes: time (sunrise|day|dusk|night|live), spot (id of element to centre on), zoomto (tuition|ai|web), hreftuition/hrefai/hrefweb. */
+/* <dh-island> — isometric Crystal Palace Park map for the hero. Attributes: time (sunrise|day|dusk|night|live), spot (id of element to centre on), zoomto (tuition|ai|web), interactive (drag to spin, responds to dh-camera), hreftuition/hrefai/hrefweb. */
 (function () {
   "use strict";
   if (customElements.get("dh-island")) { return; }
   var TW = 64, TH = 32, N = 11, FONT = "'Schibsted Grotesk', system-ui, sans-serif";
-  function iso(gx, gy, z) { return { x: (gx - gy) * TW / 2, y: (gx + gy) * TH / 2 - (z || 0) }; }
+
+  /* Viewing angle, in radians, applied to grid coords before projection.
+     iso() has ~80 call sites and no instance access, so the angle lives at
+     module scope and draw() sets it each frame. One island per page. */
+  var A = 0, CA = 1, SA = 0, MID = N / 2;
+  function setAngle(a) { A = a; CA = Math.cos(a); SA = Math.sin(a); }
+  function rotX(gx, gy) { return (gx - MID) * CA - (gy - MID) * SA + MID; }
+  function rotY(gx, gy) { return (gx - MID) * SA + (gy - MID) * CA + MID; }
+  /* Painter's-algorithm key. Unrotated this is gx + gy, the screen-y axis. */
+  function depth(gx, gy) { return rotX(gx, gy) + rotY(gx, gy); }
+  function iso(gx, gy, z) { var rx = rotX(gx, gy), ry = rotY(gx, gy); return { x: (rx - ry) * TW / 2, y: (rx + ry) * TH / 2 - (z || 0) }; }
+
+  /* The four side walls of an axis-aligned box, as [nx, ny, ax, ay, bx, by].
+     Exactly two ever face the camera; rotation permutes which two, so the
+     hand-tuned shade constants are assigned by screen orientation rather than
+     by axis. A wall only swaps in or out when it is edge-on, so it is seamless. */
+  function walls(x0, y0, x1, y1) {
+    return [[0, 1, x0, y1, x1, y1], [1, 0, x1, y0, x1, y1], [0, -1, x1, y0, x0, y0], [-1, 0, x0, y1, x0, y0]];
+  }
+  /* Rotated outward normal; >0 on .facing means the camera can see that wall,
+     and .left distinguishes the lighter screen-left wall from the darker right. */
+  function facing(w) {
+    var ax = w[0] * CA - w[1] * SA, ay = w[0] * SA + w[1] * CA;
+    return { facing: ax + ay, left: (ax - ay) < 0 };
+  }
   function lerp(a, b, t) { return a + (b - a) * t; }
   function clamp(v, a, b) { return v < a ? a : v > b ? b : v; }
   function smooth(a, b, v) { var t = clamp((v - a) / (b - a), 0, 1); return t * t * (3 - 2 * t); }
@@ -83,10 +107,10 @@
         el.href = self.getAttribute("href" + id) || a.href;
         el.style.cssText = "position:absolute;left:0;top:0;transform:translate(-50%,-100%);pointer-events:auto;display:flex;align-items:center;gap:7px;padding:5px 14px 5px 5px;border-radius:999px;background:rgba(255,255,255,0.95);color:#1C1A3A;text-decoration:none;font:700 0.9rem " + FONT + ";white-space:nowrap;box-shadow:0 6px 18px rgba(20,16,60,0.28);transition:background 0.2s,transform 0.25s cubic-bezier(.2,.8,.3,1.2)";
         el.innerHTML = '<span style="display:inline-flex;align-items:center;justify-content:center;width:26px;height:26px;border-radius:50%;background:' + a.col + ';color:#1C1A3A;font:800 0.7rem ' + FONT + '">' + a.num + "</span>" + a.label;
-        el.addEventListener("mouseenter", function () { self.focus = id; });
-        el.addEventListener("mouseleave", function () { if (self.focus === id) { self.focus = null; } });
-        el.addEventListener("focus", function () { self.focus = id; });
-        el.addEventListener("blur", function () { if (self.focus === id) { self.focus = null; } });
+        el.addEventListener("mouseenter", function () { self.focusId = id; });
+        el.addEventListener("mouseleave", function () { if (self.focusId === id) { self.focusId = null; } });
+        el.addEventListener("focus", function () { self.focusId = id; });
+        el.addEventListener("blur", function () { if (self.focusId === id) { self.focusId = null; } });
         self.pinLayer.appendChild(el); self.pins[id] = el;
       });
       var hm = this.homePin = document.createElement("a");
@@ -97,9 +121,19 @@
       hm.addEventListener("mouseenter", function () { hm.style.transform = "translate(-50%,-100%) scale(1.08)"; });
       hm.addEventListener("mouseleave", function () { hm.style.transform = "translate(-50%,-100%)"; });
       this.pinLayer.insertBefore(hm, this.pinLayer.firstChild);
-      this.onExtFocus = function (e) { self.focus = e.detail || null; };
+      this.onExtFocus = function (e) { self.focusId = e.detail || null; };
       window.addEventListener("dh-focus", this.onExtFocus);
-      this.r = rng(1851); this.t = 0; this.focus = null; this.w = 0; this.h = 0;
+      this.r = rng(1851); this.t = 0; this.focusId = null; this.w = 0; this.h = 0;
+      /* Camera the viewer drives, applied on top of the attribute-derived base. */
+      this.angle = 0; this.targetAngle = 0; this.userZoom = 1; this.targetZoom = 1; this.dragging = false;
+      this.onCam = function (e) {
+        var d = e.detail || {};
+        if (d.reset) { self.targetAngle = 0; self.targetZoom = 1; return; }
+        if (d.zoom) { self.targetZoom = clamp(self.targetZoom * (d.zoom > 0 ? 1.35 : 1 / 1.35), 0.6, 3); }
+        if (d.spin) { self.targetAngle += (d.spin > 0 ? 1 : -1) * Math.PI / 2; }
+      };
+      window.addEventListener("dh-camera", this.onCam);
+      if (this.hasAttribute("interactive")) { this.interactive(); }
       this.groups = [];
       var i;
       for (i = 0; i < 6; i++) { this.groups.push(this.newGroup("tuition")); }
@@ -110,12 +144,61 @@
         if (!self.isConnected) { return; }
         var dt = Math.min(0.05, (now - self.last) / 1000); self.last = now;
         if (!reduce) { self.step(dt); }
+        self.ease(dt);
         self.draw();
         self.raf = requestAnimationFrame(loop);
       };
       this.raf = requestAnimationFrame(loop);
     }
-    disconnectedCallback() { cancelAnimationFrame(this.raf); window.removeEventListener("dh-focus", this.onExtFocus); }
+    disconnectedCallback() {
+      cancelAnimationFrame(this.raf);
+      window.removeEventListener("dh-focus", this.onExtFocus);
+      window.removeEventListener("dh-camera", this.onCam);
+    }
+    /* Drag to spin, arrow keys to step a quadrant. Only wired up when the
+       `interactive` attribute is present, so the section pages stay fixed. */
+    interactive() {
+      var self = this, c = this.c, QUARTER = Math.PI / 2;
+      this.tabIndex = 0;
+      this.setAttribute("aria-label", "Map of the park. Drag, or use the left and right arrow keys, to turn it.");
+      /* pan-y keeps a vertical swipe scrolling the page on a phone. */
+      c.style.touchAction = "pan-y";
+      c.style.cursor = "grab";
+      c.addEventListener("pointerdown", function (e) {
+        if (e.button) { return; }
+        self.dragging = true; self.dragX = e.clientX; self.dragA = self.angle;
+        c.style.cursor = "grabbing";
+        try { c.setPointerCapture(e.pointerId); } catch (err) { /* capture is best-effort */ }
+      });
+      c.addEventListener("pointermove", function (e) {
+        if (!self.dragging) { return; }
+        self.angle = self.dragA + (e.clientX - self.dragX) * 0.006;
+      });
+      var release = function (e) {
+        if (!self.dragging) { return; }
+        self.dragging = false; c.style.cursor = "grab";
+        self.targetAngle = Math.round(self.angle / QUARTER) * QUARTER;
+        try { c.releasePointerCapture(e.pointerId); } catch (err) { /* already released */ }
+      };
+      c.addEventListener("pointerup", release);
+      c.addEventListener("pointercancel", release);
+      this.addEventListener("keydown", function (e) {
+        if (e.key === "ArrowLeft") { self.targetAngle -= QUARTER; }
+        else if (e.key === "ArrowRight") { self.targetAngle += QUARTER; }
+        else { return; }
+        e.preventDefault();
+      });
+    }
+    /* Camera easing. Driven off dt, not this.t, because the clock is frozen
+       under reduced motion while the loop keeps running — there we snap. */
+    ease(dt) {
+      if (this.dragging) { return; }
+      var k = reduce ? 1 : 1 - Math.pow(0.0012, dt);
+      this.angle = lerp(this.angle, this.targetAngle, k);
+      if (Math.abs(this.angle - this.targetAngle) < 0.0005) { this.angle = this.targetAngle; }
+      this.userZoom = lerp(this.userZoom, this.targetZoom, k);
+      if (Math.abs(this.userZoom - this.targetZoom) < 0.001) { this.userZoom = this.targetZoom; }
+    }
     hour() {
       var t = this.getAttribute("time") || "sunrise";
       if (t === "live") { var d = new Date(); return d.getHours() + d.getMinutes() / 60; }
@@ -160,8 +243,11 @@
       if (spot) { var sr = spot.getBoundingClientRect(); r = { x: sr.left - me.left, y: sr.top - me.top, w: sr.width, h: sr.height }; }
       else { r = { x: 0, y: 0, w: w, h: h }; }
       var z = this.getAttribute("zoomto"), base = Math.min(r.w / 760, r.h / 480);
+      /* The attribute gives the base framing; the viewer's zoom multiplies it.
+         Without this split layout() would wipe the user camera every frame. */
       if (z && ST[z]) { var c0 = iso(ST[z].gx, ST[z].gy, 34); this.cx = c0.x; this.cy = c0.y; this.s = clamp(base * 1.9, 0.75, 2.4); }
       else { this.cx = 0; this.cy = 160; this.s = clamp(base, 0.38, 1.4); }
+      this.s *= this.userZoom || 1;
       this.sr = r; this.ox = r.x + r.w / 2; this.oy = r.y + r.h / 2;
     }
     P(p) { return { x: (p.x - this.cx) * this.s + this.ox, y: (p.y - this.cy) * this.s + this.oy }; }
@@ -169,18 +255,38 @@
     line(a, b, col, wdt) { var x = this.ctx, p = this.P(a), q = this.P(b); x.strokeStyle = col; x.lineWidth = wdt * this.s; x.beginPath(); x.moveTo(p.x, p.y); x.lineTo(q.x, q.y); x.stroke(); }
     box(gx, gy, w, d, h, col, z0) {
       z0 = z0 || 0; var x0 = gx - w / 2, x1 = gx + w / 2, y0 = gy - d / 2, y1 = gy + d / 2;
-      this.poly([iso(x0, y1, z0), iso(x1, y1, z0), iso(x1, y1, z0 + h), iso(x0, y1, z0 + h)], rgb(shade(col, 0.78)));
-      this.poly([iso(x1, y0, z0), iso(x1, y1, z0), iso(x1, y1, z0 + h), iso(x1, y0, z0 + h)], rgb(shade(col, 0.6)));
+      var ws = walls(x0, y0, x1, y1), i, w2, f;
+      for (i = 0; i < 4; i++) {
+        w2 = ws[i]; f = facing(w2);
+        if (f.facing <= 0) { continue; }
+        this.poly([iso(w2[2], w2[3], z0), iso(w2[4], w2[5], z0), iso(w2[4], w2[5], z0 + h), iso(w2[2], w2[3], z0 + h)], rgb(shade(col, f.left ? 0.78 : 0.6)));
+      }
       this.poly([iso(x0, y0, z0 + h), iso(x1, y0, z0 + h), iso(x1, y1, z0 + h), iso(x0, y1, z0 + h)], rgb(shade(col, 1.06)));
     }
     roof(gx, gy, w, d, z, rh, col) {
       var x0 = gx - w / 2 - 0.08, x1 = gx + w / 2 + 0.08, y0 = gy - d / 2 - 0.08, y1 = gy + d / 2 + 0.08, apex = iso(gx, gy, z + rh);
-      this.poly([iso(x0, y1, z), iso(x1, y1, z), apex], rgb(shade(col, 0.88)));
-      this.poly([iso(x1, y0, z), iso(x1, y1, z), apex], rgb(shade(col, 0.66)));
+      var ws = walls(x0, y0, x1, y1), i, w2, f;
+      for (i = 0; i < 4; i++) {
+        w2 = ws[i]; f = facing(w2);
+        if (f.facing <= 0) { continue; }
+        this.poly([iso(w2[2], w2[3], z), iso(w2[4], w2[5], z), apex], rgb(shade(col, f.left ? 0.88 : 0.66)));
+      }
     }
     windows(gx, gy, w, d, z, lit, n) {
-      var x = this.ctx, s = this.s;
-      for (var i = 0; i < n; i++) { var p = this.P(iso(gx - w / 2 + w * (i + 0.5) / n, gy + d / 2, z)); x.fillStyle = lit ? "rgba(255,214,120,0.95)" : "rgba(30,40,70,0.55)"; x.fillRect(p.x - 3 * s, p.y - 6 * s, 6 * s, 7 * s); }
+      var x = this.ctx, s = this.s, x0 = gx - w / 2, x1 = gx + w / 2, y0 = gy - d / 2, y1 = gy + d / 2;
+      var ws = walls(x0, y0, x1, y1), i, w2, f, k, t, p;
+      x.fillStyle = lit ? "rgba(255,214,120,0.95)" : "rgba(30,40,70,0.55)";
+      for (i = 0; i < 4; i++) {
+        w2 = ws[i]; f = facing(w2);
+        /* Windows sit on the screen-left wall — the y1 face when unrotated, so
+           the default view is unchanged, and they never land on a hidden side. */
+        if (f.facing <= 0 || !f.left) { continue; }
+        for (k = 0; k < n; k++) {
+          t = (k + 0.5) / n;
+          p = this.P(iso(lerp(w2[2], w2[4], t), lerp(w2[3], w2[5], t), z));
+          x.fillRect(p.x - 3 * s, p.y - 6 * s, 6 * s, 7 * s);
+        }
+      }
     }
     circle(p, r, fill) { var x = this.ctx, q = this.P(p); x.beginPath(); x.arc(q.x, q.y, r * this.s, 0, Math.PI * 2); x.fillStyle = fill; x.fill(); }
     text(p, txt, size, fill) { var x = this.ctx, q = this.P(p); x.font = "800 " + Math.max(7, size * this.s) + "px " + FONT; x.textAlign = "center"; x.textBaseline = "middle"; x.fillStyle = fill; x.fillText(txt, q.x, q.y); }
@@ -195,9 +301,17 @@
       this.box(gx, gy, w, d, h, col, z0);
       var x0 = gx - w / 2, x1 = gx + w / 2, y1 = gy + d / 2, y0 = gy - d / 2, mull = "rgba(255,255,255,0.85)", k;
       var nx = Math.max(2, Math.round(w * 5)), ny = Math.max(2, Math.round(d * 5));
-      for (k = 1; k < nx; k++) { var fx = x0 + w * k / nx; this.line(iso(fx, y1, z0), iso(fx, y1, z0 + h), mull, 0.9); }
-      for (k = 1; k < ny; k++) { var fy = y0 + d * k / ny; this.line(iso(x1, fy, z0), iso(x1, fy, z0 + h), mull, 0.9); }
-      this.line(iso(x0, y1, z0 + h / 2), iso(x1, y1, z0 + h / 2), mull, 0.9); this.line(iso(x1, y0, z0 + h / 2), iso(x1, y1, z0 + h / 2), mull, 0.9);
+      var ws = walls(x0, y0, x1, y1), i, w2, f, nn, t, mx, my;
+      for (i = 0; i < 4; i++) {
+        w2 = ws[i]; f = facing(w2);
+        if (f.facing <= 0) { continue; }
+        nn = w2[0] ? ny : nx;
+        for (k = 1; k < nn; k++) {
+          t = k / nn; mx = lerp(w2[2], w2[4], t); my = lerp(w2[3], w2[5], t);
+          this.line(iso(mx, my, z0), iso(mx, my, z0 + h), mull, 0.9);
+        }
+        this.line(iso(w2[2], w2[3], z0 + h / 2), iso(w2[4], w2[5], z0 + h / 2), mull, 0.9);
+      }
     }
     station(id, lit) {
       var a = ST[id];
@@ -275,6 +389,9 @@
       }
     }
     draw() {
+      /* Set the module-level viewing angle first: layout() projects through
+         iso() too, so it has to see the same angle as the rest of the frame. */
+      setAngle(this.angle || 0);
       this.layout();
       var x = this.ctx, w = this.w, h = this.h, self = this, hr = this.hour(), night = nightness(hr), sky = skyAt(hr), sr = this.sr;
       x.setTransform(this.dpr, 0, 0, this.dpr, 0, 0);
@@ -294,8 +411,14 @@
       x.fillStyle = "rgba(255,255,255," + (0.5 - night * 0.38) + ")";
       for (var cI = 0; cI < 4; cI++) { var cw = sr.w * 0.11, cx = sr.x + cw * 1.2 + ((cI * 0.31 + this.t * 0.006 * (cI + 1)) % 1) * (sr.w - cw * 2.4), cy = sr.y + sr.h * (0.06 + cI * 0.06); x.beginPath(); x.ellipse(cx, cy, cw, sr.h * 0.03, 0, 0, Math.PI * 2); x.ellipse(cx + cw * 0.55, cy - sr.h * 0.02, cw * 0.7, sr.h * 0.04, 0, 0, Math.PI * 2); x.fill(); }
 
-      this.poly([iso(N, 0, 0), iso(N, N, 0), iso(N, N, -34), iso(N, 0, -34)], rgb(PAL.earth2));
-      this.poly([iso(0, N, 0), iso(N, N, 0), iso(N, N, -34), iso(0, N, -34)], rgb(PAL.earth));
+      /* Only the cliff faces the camera can see, else you look straight
+         through the island's open back once it turns. */
+      var slab = walls(0, 0, N, N), sI, sW, sF;
+      for (sI = 0; sI < 4; sI++) {
+        sW = slab[sI]; sF = facing(sW);
+        if (sF.facing <= 0) { continue; }
+        this.poly([iso(sW[2], sW[3], 0), iso(sW[4], sW[5], 0), iso(sW[4], sW[5], -34), iso(sW[2], sW[3], -34)], rgb(sF.left ? PAL.earth : PAL.earth2));
+      }
       for (var gy = 0; gy < N; gy++) {
         for (var gx = 0; gx < N; gx++) {
           var key = gx + "," + gy, col;
@@ -308,7 +431,7 @@
       }
       /* terrace steps in front of the gate */
       this.poly([iso(3.4, 10.1), iso(7.6, 10.1), iso(7.6, 11), iso(3.4, 11)], rgb(PAL.stone));
-      var fid = this.focus || this.getAttribute("zoomto");
+      var fid = this.focusId || this.getAttribute("zoomto");
       if (fid && ST[fid]) {
         var fa = ST[fid], rad2 = 1.25 + (reduce ? 0 : 0.12 * Math.sin(this.t * 4)), ring = [];
         for (var k2 = 0; k2 < 40; k2++) { var an = k2 / 40 * Math.PI * 2; ring.push(iso(fa.gx + Math.cos(an) * rad2, fa.gy + Math.sin(an) * rad2, 0)); }
@@ -318,18 +441,20 @@
       this.box(bgx, bgy, 0.42, 0.26, 6, hex("#F25C54")); this.person(bgx, bgy, { b: "#FFB320", h: "#F3D2B3", hair: "#5A3A22" }, 6);
 
       var lit = night > 0.45, objs = [];
-      Object.keys(ST).forEach(function (id) { var a = ST[id]; objs.push({ d: a.gx + a.gy + 0.6, f: function () { self.station(id, lit); } }); });
-      objs.push({ d: 9.5 + 1.5 + 0.6, f: function () { self.mast(9.5, 1.5, night); } });
-      objs.push({ d: 1.5 + 1.6, f: function () { self.dino(1.5, 1.6, PAL.dino1, 1); } });
-      objs.push({ d: 2.5 + 2.4, f: function () { self.dino(2.5, 2.4, PAL.dino2, -1); } });
-      objs.push({ d: 3.7 + 10.4, f: function () { self.sphinx(3.7, 10.4); } });
-      objs.push({ d: 7.3 + 10.4, f: function () { self.sphinx(7.3, 10.4); } });
-      TREES.forEach(function (t) { objs.push({ d: t[0] + t[1] + 1, f: function () { self.tree(t[0], t[1], night); } }); });
-      LAMPS.forEach(function (l) { objs.push({ d: l[0] + l[1] + 1, f: function () { self.box(l[0] + 0.15, l[1] + 0.15, 0.06, 0.06, 26, [60, 60, 80]); self.circle(iso(l[0] + 0.15, l[1] + 0.15, 28), 3.5, lit ? "#FFE08A" : "#D8D8E8"); } }); });
+      /* Depth is the rotated screen-y axis — plain gx + gy only sorts correctly
+         at the unrotated angle. The small constants are unchanged tie-breaks. */
+      Object.keys(ST).forEach(function (id) { var a = ST[id]; objs.push({ d: depth(a.gx, a.gy) + 0.6, f: function () { self.station(id, lit); } }); });
+      objs.push({ d: depth(9.5, 1.5) + 0.6, f: function () { self.mast(9.5, 1.5, night); } });
+      objs.push({ d: depth(1.5, 1.6), f: function () { self.dino(1.5, 1.6, PAL.dino1, 1); } });
+      objs.push({ d: depth(2.5, 2.4), f: function () { self.dino(2.5, 2.4, PAL.dino2, -1); } });
+      objs.push({ d: depth(3.7, 10.4), f: function () { self.sphinx(3.7, 10.4); } });
+      objs.push({ d: depth(7.3, 10.4), f: function () { self.sphinx(7.3, 10.4); } });
+      TREES.forEach(function (t) { objs.push({ d: depth(t[0], t[1]) + 1, f: function () { self.tree(t[0], t[1], night); } }); });
+      LAMPS.forEach(function (l) { objs.push({ d: depth(l[0], l[1]) + 1, f: function () { self.box(l[0] + 0.15, l[1] + 0.15, 0.06, 0.06, 26, [60, 60, 80]); self.circle(iso(l[0] + 0.15, l[1] + 0.15, 28), 3.5, lit ? "#FFE08A" : "#D8D8E8"); } }); });
       this.groups.forEach(function (gp) {
         var a = gp.route[Math.min(gp.i, gp.route.length - 1)], b = gp.route[Math.min(gp.i + 1, gp.route.length - 1)];
         var bx = lerp(a[0], b[0], gp.f) + 0.5 + gp.jx, by = lerp(a[1], b[1], gp.f) + 0.5 + gp.jy;
-        gp.members.forEach(function (m) { var px = bx + m.ox, py = by + m.oy; objs.push({ d: px + py, f: function () { self.person(px, py, m); } }); });
+        gp.members.forEach(function (m) { var px = bx + m.ox, py = by + m.oy; objs.push({ d: depth(px, py), f: function () { self.person(px, py, m); } }); });
       });
       objs.sort(function (a, b) { return a.d - b.d; });
       objs.forEach(function (o) { o.f(); });
@@ -346,12 +471,15 @@
       var gq = self.P(iso(ST.gate.gx, ST.gate.gy, 94)), gb = reduce ? 0 : Math.sin(self.t * 2 + 1.3) * 2.5;
       self.homePin.style.left = gq.x + "px"; self.homePin.style.top = (gq.y + gb) + "px";
       PINS.forEach(function (id) {
-        var a = ST[id], q = self.P(iso(a.gx, a.gy, a.top + 14)), el = self.pins[id], zt = self.getAttribute("zoomto"), on = (self.focus || zt) === id;
+        var a = ST[id], q = self.P(iso(a.gx, a.gy, a.top + 14)), el = self.pins[id], zt = self.getAttribute("zoomto"), on = (self.focusId || zt) === id;
         el.style.display = zt && zt !== id ? "none" : "flex";
         var bob = reduce ? 0 : Math.sin(self.t * 2 + a.gx) * 2.5;
         el.style.left = q.x + "px"; el.style.top = (q.y + bob) + "px";
         el.style.background = on ? "#FFB320" : "rgba(255,255,255,0.95)";
-        el.style.transform = on ? "translate(-50%,-100%) scale(1.08)" : "translate(-50%,-100%)";
+        /* Pins are DOM, so they don't scale with the canvas. Track the viewer's
+           zoom gently (sqrt) so they neither swamp the park nor vanish. */
+        var pk = clamp(Math.sqrt(self.userZoom || 1), 0.72, 1.3) * (on ? 1.08 : 1);
+        el.style.transform = "translate(-50%,-100%) scale(" + pk.toFixed(3) + ")";
       });
     }
   }

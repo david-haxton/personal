@@ -6,6 +6,10 @@ import { type Section } from "./tokens";
  * renders the element empty and leaves its children alone.
  */
 export default function Island({ zoomTo }: { zoomTo?: Section }) {
+  // Only the homepage park can be spun and zoomed; the section pages keep the
+  // fixed framing of their own landmark.
+  const interactive = zoomTo === undefined ? "" : undefined;
+
   const hrefs =
     zoomTo === undefined
       ? { hreftuition: "/tuition", hrefai: "/ai", hrefweb: "/web" }
@@ -22,6 +26,7 @@ export default function Island({ zoomTo }: { zoomTo?: Section }) {
         time="sunrise"
         spot="island-spot"
         zoomto={zoomTo}
+        interactive={interactive}
         {...hrefs}
         style={{ display: "block", position: "absolute", overflow: "hidden", inset: 0 }}
       />
