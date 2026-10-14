@@ -141,6 +141,11 @@ the bubble itself is DOM so the text stays crisp at any zoom. A drag sets
 Enter or Space greets from the keyboard. Lines live in `HELLOS`, and this one
 works on every page, not just the homepage.
 
+Pin sizes are cached on the elements (`__w` / `__h`) by `measurePins()` and
+re-taken only when the canvas resizes. Reading `offsetWidth` inside the draw
+loop forced a synchronous reflow between style writes, thrashing layout every
+frame.
+
 Arriving at one of the three buildings, a group goes **inside** — `g.inside` is
 set for the duration of the wait and `draw()` skips them — then comes back out
 of the same door when the wait ends. The gate and the lakeside are open air, so

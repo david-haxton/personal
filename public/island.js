@@ -297,6 +297,12 @@
       var start = r() < 0.55 ? home : this.nextStop(null, home);
       return { kind: kind, home: home, inside: !!INDOORS[start], route: route(start, this.nextStop(start, home)), i: 0, f: 0, speed: (kind === "tuition" ? 0.45 : 0.55) + r() * 0.4, wait: r() * 6, members: m, jx: r() * 0.4 - 0.2, jy: r() * 0.4 - 0.2 };
     }
+    /* Cache each pin's intrinsic size. They never change on their own — the
+       zoom scaling is a transform, which does not affect offsetWidth. */
+    measurePins() {
+      var all = [this.homePin].concat(PINS.map(function (id) { return this.pins[id]; }, this));
+      all.forEach(function (el) { if (el) { el.__w = el.offsetWidth; el.__h = el.offsetHeight; } });
+    }
     /* Did that tap land on David? Compare against where he was last drawn. */
     greetIfHit(clientX, clientY) {
       var d = this.david;
@@ -346,7 +352,7 @@
       this.groups.forEach(function (g) {
         if (g.wait > 0) { g.wait -= dt; return; }
         g.inside = false;                       /* wait over — back out the door */
-        g.f += dt * g.speed * 1.4;
+        g.f += dt * g.speed * 0.85;   /* global pace; lower is a slower stroll */
         while (g.f >= 1) {
           g.f -= 1; g.i++;
           if (g.i >= g.route.length - 1) {
@@ -361,7 +367,11 @@
     }
     layout() {
       var dpr = Math.min(window.devicePixelRatio || 1, 2), w = this.clientWidth || 300, h = this.clientHeight || 200;
-      if (w !== this.w || h !== this.h || dpr !== this.dpr) { this.w = w; this.h = h; this.dpr = dpr; this.c.width = Math.round(w * dpr); this.c.height = Math.round(h * dpr); }
+      if (w !== this.w || h !== this.h || dpr !== this.dpr) {
+        this.w = w; this.h = h; this.dpr = dpr;
+        this.c.width = Math.round(w * dpr); this.c.height = Math.round(h * dpr);
+        this.measurePins();
+      }
       var me = this.getBoundingClientRect(), id = this.getAttribute("spot"), spot = id && document.getElementById(id), r;
       if (spot) { var sr = spot.getBoundingClientRect(); r = { x: sr.left - me.left, y: sr.top - me.top, w: sr.width, h: sr.height }; }
       else { r = { x: 0, y: 0, w: w, h: h }; }
@@ -604,8 +614,11 @@
       /* Keep a pin inside the column the park is framed in. Zoomed in on a
          subpage the gate drifts a long way from the landmark, and the home pin
          ended up sitting on top of the headline. */
+      /* Pin sizes are measured once, not per frame. Reading offsetWidth here
+         forces a synchronous reflow, and doing it between style writes made the
+         whole hero thrash layout ~60 times a second. */
       var penX = function (el, x) {
-        var half = el.offsetWidth / 2 + 6, lo = self.sr.x + half, hi = self.sr.x + self.sr.w - half;
+        var half = (el.__w || 0) / 2 + 6, lo = self.sr.x + half, hi = self.sr.x + self.sr.w - half;
         return hi > lo ? clamp(x, lo, hi) : x;
       };
       /* The name tag floats over David rather than over the gate. It follows
@@ -614,7 +627,7 @@
          column, which is what kept pins off the headline. */
       var gb = reduce ? 0 : Math.sin(self.t * 2 + 1.3) * 2.5;
       var dg = self.david, dq = dg ? self.P(iso(self.groupPos(dg).x, self.groupPos(dg).y, 30)) : null;
-      var halfTag = self.homePin.offsetWidth / 2;
+      var halfTag = (self.homePin.__w || 0) / 2;
       var tagOk = !!dq && !dg.inside && dq.x - halfTag >= self.sr.x && dq.x + halfTag <= self.sr.x + self.sr.w;
       self.homePin.style.display = tagOk ? "flex" : "none";
       if (tagOk) { self.homePin.style.left = dq.x + "px"; self.homePin.style.top = (dq.y + gb) + "px"; }
@@ -623,7 +636,7 @@
       if (saying) {
         self.sayBubble.textContent = self.sayText;
         self.sayBubble.style.left = dq.x + "px";
-        self.sayBubble.style.top = (dq.y + gb - self.homePin.offsetHeight - 8) + "px";
+        self.sayBubble.style.top = (dq.y + gb - (self.homePin.__h || 0) - 8) + "px";
       }
       PINS.forEach(function (id) {
         var a = ST[id], q = self.P(iso(a.gx, a.gy, a.top + 14)), el = self.pins[id], zt = self.getAttribute("zoomto"), on = (self.focusId || zt) === id;
