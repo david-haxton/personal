@@ -1,6 +1,9 @@
 "use client";
 
-import { ink, page } from "./tokens";
+import { useEffect, useState } from "react";
+import { page } from "./tokens";
+
+const STORE = "dh-motion";
 
 type Cam = { zoom?: number; spin?: number; reset?: boolean };
 
@@ -29,6 +32,29 @@ const button: React.CSSProperties = {
 };
 
 export default function IslandControls() {
+  /* null = follow the system preference, true/false = the viewer overrode it.
+     Lives here rather than in the element so the label can reflect the state. */
+  const [motion, setMotion] = useState<boolean | null>(null);
+
+  useEffect(() => {
+    let saved: string | null = null;
+    try { saved = window.localStorage.getItem(STORE); } catch { /* private mode */ }
+    if (saved === "on" || saved === "off") {
+      const on = saved === "on";
+      setMotion(on);
+      window.dispatchEvent(new CustomEvent(STORE, { detail: { on } }));
+    } else {
+      setMotion(!window.matchMedia("(prefers-reduced-motion: reduce)").matches);
+    }
+  }, []);
+
+  const toggleMotion = () => {
+    const on = !motion;
+    setMotion(on);
+    try { window.localStorage.setItem(STORE, on ? "on" : "off"); } catch { /* private mode */ }
+    window.dispatchEvent(new CustomEvent(STORE, { detail: { on } }));
+  };
+
   return (
     <div
       style={{
@@ -70,6 +96,15 @@ export default function IslandControls() {
         aria-label="Reset the view"
       >
         Reset
+      </button>
+      <button
+        type="button"
+        style={{ ...button, width: "auto", padding: "0 14px", fontSize: "0.82rem" }}
+        onClick={toggleMotion}
+        aria-pressed={motion === true}
+        aria-label={motion ? "Stop the park moving" : "Let the park move"}
+      >
+        {motion ? "Pause" : "Animate"}
       </button>
     </div>
   );

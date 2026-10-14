@@ -84,7 +84,22 @@
     stone: hex("#D8CBB0"), glass: hex("#BFE3F2"), dino1: hex("#7E8C6A"), dino2: hex("#8F7B5E")
   };
   var SKIN = ["#F3D2B3", "#D9A57A", "#A86F48", "#6E4429"], HAIR_DARK = ["#2B1D14", "#5A3A22", "#1C1A3A", "#8A5A2B"], HAIR_OLD = ["#C9C9D1", "#EDEDED", "#9A948C"];
-  var reduce = window.matchMedia && window.matchMedia("(prefers-reduced-motion: reduce)").matches;
+  /* Motion gate. Read live rather than latched at load: Chrome's Battery Saver
+     reports reduced motion while it is active, and a one-shot read leaves the
+     park frozen for the life of the page once that happens. `override` is the
+     viewer's explicit choice (dh-motion), which beats the media query. */
+  var motionQuery = window.matchMedia ? window.matchMedia("(prefers-reduced-motion: reduce)") : null;
+  var override = null, reduce = motionQuery ? motionQuery.matches : false;
+  function syncMotion() { reduce = override === null ? (motionQuery ? motionQuery.matches : false) : !override; }
+  if (motionQuery) {
+    if (motionQuery.addEventListener) { motionQuery.addEventListener("change", syncMotion); }
+    else if (motionQuery.addListener) { motionQuery.addListener(syncMotion); }
+  }
+  window.addEventListener("dh-motion", function (e) {
+    var d = e && e.detail;
+    override = (d && typeof d.on === "boolean") ? d.on : null;
+    syncMotion();
+  });
 
   class Island extends HTMLElement {
     static get observedAttributes() { return ["time"]; }
@@ -135,10 +150,20 @@
       window.addEventListener("dh-camera", this.onCam);
       if (this.hasAttribute("interactive")) { this.interactive(); }
       this.groups = [];
-      var i;
-      for (i = 0; i < 6; i++) { this.groups.push(this.newGroup("tuition")); }
-      for (i = 0; i < 6; i++) { this.groups.push(this.newGroup("ai")); }
-      for (i = 0; i < 5; i++) { this.groups.push(this.newGroup("web")); }
+      /* Each page gets mostly its own audience, with a handful of others so the
+         park still reads as public. Counts are weighted by PEOPLE, not groups:
+         a tuition group is 2-3 (adult plus children), ai 1-2, web 1-2, so equal
+         group counts would leave the web page half as populated. Each column
+         lands near 27 figures with roughly three-quarters the page's own kind. */
+      var MIX = {
+        tuition: { tuition: 9, ai: 3, web: 3 },
+        ai: { tuition: 2, ai: 17, web: 2 },
+        web: { tuition: 2, ai: 2, web: 15 }
+      };
+      var mix = MIX[this.getAttribute("zoomto")] || { tuition: 6, ai: 6, web: 5 };
+      ["tuition", "ai", "web"].forEach(function (kind) {
+        for (var n = 0; n < mix[kind]; n++) { self.groups.push(self.newGroup(kind)); }
+      });
       this.last = performance.now();
       var loop = function (now) {
         if (!self.isConnected) { return; }
@@ -188,6 +213,17 @@
         else { return; }
         e.preventDefault();
       });
+      /* Wheel zoom. Scales continuously from deltaY rather than reusing the
+         buttons' discrete 1.35 step, which a trackpad would slam to the clamp
+         in one flick. Shares targetZoom and the 0.6–3 bounds with the buttons.
+         preventDefault only when the zoom actually moved, so once it is pinned
+         at a limit the page scrolls on instead of trapping the reader here. */
+      c.addEventListener("wheel", function (e) {
+        var unit = e.deltaMode === 1 ? 16 : e.deltaMode === 2 ? self.clientHeight || 400 : 1;
+        var before = self.targetZoom;
+        self.targetZoom = clamp(before * Math.exp(-e.deltaY * unit * 0.0016), 0.6, 3);
+        if (self.targetZoom !== before) { e.preventDefault(); }
+      }, { passive: false });
     }
     /* Camera easing. Driven off dt, not this.t, because the clock is frozen
        under reduced motion while the loop keeps running — there we snap. */
@@ -208,6 +244,9 @@
     /* Each section has its own visitors: parents with kids for tuition, adults of every age for AI, makers with laptops for web */
     newGroup(kind) {
       var r = this.r.bind(this), m = [], self = this;
+      /* Unknown kinds used to fall through to the laptop branch and then throw
+         on ST[kind].door; fail loudly on the typo instead. */
+      if (!ST[kind]) { throw new Error('dh-island: unknown crowd kind "' + kind + '"'); }
       if (kind === "tuition") {
         m.push({ b: this.pick(["#4F7CE0", "#8B5CF6", "#1C1A3A", "#2BB5A8", "#E8E2D0", "#A0785A"]), h: this.pick(SKIN), hair: this.pick(HAIR_DARK), sc: 1, ox: -0.13, oy: 0.05 });
         var kids = r() < 0.35 ? 2 : 1;
@@ -216,7 +255,10 @@
         var n = r() < 0.3 ? 2 : 1;
         for (var j = 0; j < n; j++) { var old = r() < 0.6; m.push({ b: this.pick(["#C8372F", "#6B7A8F", "#A0785A", "#3E4C8F", "#E8E2D0", "#127A71"]), h: this.pick(SKIN), hair: old ? this.pick(HAIR_OLD) : this.pick(HAIR_DARK), sc: 1, bubble: r() < 0.55, seed: r() * 10, ox: j * 0.22 - 0.1, oy: j * 0.08 }); }
       } else {
-        m.push({ b: this.pick(["#1C1A3A", "#F25C54", "#FFB320", "#2BB5A8", "#4F7CE0"]), h: this.pick(SKIN), hair: this.pick(HAIR_DARK), sc: 1, laptop: true, ox: 0, oy: 0 });
+        /* Makers sometimes pair up, so the web crowd reads as people working
+           together rather than a scatter of lone figures. */
+        var pairs = r() < 0.35 ? 2 : 1;
+        for (var q = 0; q < pairs; q++) { m.push({ b: this.pick(["#1C1A3A", "#F25C54", "#FFB320", "#2BB5A8", "#4F7CE0"]), h: this.pick(SKIN), hair: this.pick(HAIR_DARK), sc: 1, laptop: true, ox: q * 0.22 - 0.09, oy: q * 0.08 }); }
       }
       var home = ST[kind].door.join(","), keys = Object.keys(PATH), start = keys[(r() * keys.length) | 0];
       return { kind: kind, home: home, route: route(start, home), i: 0, f: r(), speed: (kind === "tuition" ? 0.45 : 0.55) + r() * 0.4, wait: r() * 4, members: m, jx: r() * 0.4 - 0.2, jy: r() * 0.4 - 0.2 };

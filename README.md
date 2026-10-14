@@ -70,7 +70,16 @@ The element listens on two window events, so nothing needs a ref to it:
 - `dh-focus` — `detail` is a station id, which highlights that landmark.
 - `dh-camera` — `detail` takes `{ spin: ±1 }` to turn a quarter, `{ zoom: ±1 }`
   to step the zoom, or `{ reset: true }` to return to the default view.
-  `components/IslandControls.tsx` is the only caller.
+- `dh-motion` — `detail` takes `{ on: true | false }` to force the park moving
+  or still, or `{}` to go back to following the system preference.
+
+`components/IslandControls.tsx` is the only caller of both.
+
+The wheel zooms when the cursor is over the park, sharing one zoom state with
+the buttons. It only swallows the event while the zoom is actually changing —
+once pinned at either limit the wheel passes through and the page scrolls
+normally, so nobody gets stuck at the top. Touch is unaffected; the canvas is
+`touch-action: pan-y` so a vertical swipe still scrolls on a phone.
 
 The park is drawn at a fixed 45° isometric, and `box()` only ever paints the
 two walls of a building that face the camera. Rotation therefore snaps to the
@@ -81,6 +90,21 @@ rotation would mean rebuilding those primitives around a real lighting model.
 
 Dragging works under `prefers-reduced-motion` — only the easing is suppressed,
 so the view snaps between quadrants instead of gliding.
+
+The motion preference is read **live**, not once at load. Chrome's Battery
+Saver reports reduced motion while it is active, and a one-shot read left the
+park frozen for the life of the page once that happened. The `dh-motion`
+override lets a viewer start the park regardless of what the browser reports.
+
+#### Who walks where
+
+`newGroup(kind)` builds a different crowd per section — an adult with one or
+two backpacked children for tuition, adults of mixed age with "?" bubbles for
+AI, laptop-carrying makers (sometimes in pairs) for web. Each page weights the
+spawn toward its own audience via the `MIX` table in `connectedCallback`.
+Counts are weighted by **people, not groups**: a tuition group is 2–3 people
+and a web group 1–2, so equal group counts would leave `/web` half as
+populated. Every page lands near 30 figures with roughly 70% its own kind.
 
 ## Still to do before launch
 
