@@ -22,6 +22,13 @@ Open [http://localhost:3000](http://localhost:3000).
 Both bars carry **Home** as a nav item, and both wordmarks link to `/`, so
 there are four routes back to the landing page from anywhere. The header pill
 takes the amber fill for the page you are on, Home included.
+
+**The map is navigation, so it shows every destination on every page.** All
+three pins are always present and always relative links, and the park is framed
+the same way everywhere. Zooming a section page into its own landmark used to
+push the other two off screen, which left the map with a single pin pointing at
+the page you were already on — a dead end. The current section is signalled by
+the focus ring and its amber pin instead of by the framing.
 | `/tuition` | Student tuition | GCSE & A-Level. Carries the results figure and the note for parents. |
 | `/ai` | AI for adults | One-to-one sessions, plus free intro sessions for community hubs. |
 | `/web` | Web design | Two live builds and how-I-work. |
@@ -60,7 +67,7 @@ a canvas and positions the map pins itself, reading its attributes:
 |---|---|
 | `time` | Lighting preset (`sunrise`) |
 | `spot` | Id of the element to centre the park on — always `island-spot` |
-| `zoomto` | Which landmark to zoom to (`tuition` / `ai` / `web`); omitted on home |
+| `zoomto` | Which landmark is the current page (`tuition` / `ai` / `web`); omitted on home. Marks it with the focus ring and an amber pin — it no longer changes the framing. |
 | `interactive` | Present on the homepage only: drag to spin, arrow keys to step a quadrant |
 | `hrefhome`, `hreftuition`, `hrefai`, `hrefweb` | Where each pin links |
 

@@ -335,11 +335,14 @@
       var me = this.getBoundingClientRect(), id = this.getAttribute("spot"), spot = id && document.getElementById(id), r;
       if (spot) { var sr = spot.getBoundingClientRect(); r = { x: sr.left - me.left, y: sr.top - me.top, w: sr.width, h: sr.height }; }
       else { r = { x: 0, y: 0, w: w, h: h }; }
-      var z = this.getAttribute("zoomto"), base = Math.min(r.w / 760, r.h / 480);
-      /* The attribute gives the base framing; the viewer's zoom multiplies it.
-         Without this split layout() would wipe the user camera every frame. */
-      if (z && ST[z]) { var c0 = iso(ST[z].gx, ST[z].gy, 34); this.cx = c0.x; this.cy = c0.y; this.s = clamp(base * 1.9, 0.75, 2.4); }
-      else { this.cx = 0; this.cy = 160; this.s = clamp(base, 0.38, 1.4); }
+      var base = Math.min(r.w / 760, r.h / 480);
+      /* The whole park, framed the same on every page. Zooming a section page
+         into its own landmark pushed the other two off screen, which left the
+         map a dead end — one pin, for the page you were already on. The current
+         section is marked by the focus ring and its amber pin instead.
+         The viewer's zoom multiplies this; without the split, layout() would
+         wipe the user camera every frame. */
+      this.cx = 0; this.cy = 160; this.s = clamp(base, 0.38, 1.4);
       this.s *= this.userZoom || 1;
       this.sr = r; this.ox = r.x + r.w / 2; this.oy = r.y + r.h / 2;
     }
@@ -583,7 +586,9 @@
       };
       PINS.forEach(function (id) {
         var a = ST[id], q = self.P(iso(a.gx, a.gy, a.top + 14)), el = self.pins[id], zt = self.getAttribute("zoomto"), on = (self.focusId || zt) === id;
-        el.style.display = zt && zt !== id ? "none" : "flex";
+        /* Every destination is always on the map. Hiding the other two left a
+           section page with one pin, pointing at the page you were already on. */
+        el.style.display = "flex";
         var bob = reduce ? 0 : Math.sin(self.t * 2 + a.gx) * 2.5;
         el.style.left = penX(el, q.x) + "px"; el.style.top = (q.y + bob) + "px";
         el.style.background = on ? "#FFB320" : "rgba(255,255,255,0.95)";

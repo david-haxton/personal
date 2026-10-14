@@ -6,18 +6,15 @@ import { type Section } from "./tokens";
  * renders the element empty and leaves its children alone.
  */
 export default function Island({ zoomTo }: { zoomTo?: Section }) {
-  // Only the homepage park can be spun and zoomed; the section pages keep the
-  // fixed framing of their own landmark.
+  // Only the homepage park can be spun and zoomed. Every page frames the whole
+  // park, so the map works as a navigator everywhere; zoomto just marks which
+  // landmark is the current one.
   const interactive = zoomTo === undefined ? "" : undefined;
 
-  const hrefs =
-    zoomTo === undefined
-      ? { hreftuition: "/tuition", hrefai: "/ai", hrefweb: "/web" }
-      : zoomTo === "tuition"
-        ? { hreftuition: "/tuition" }
-        : zoomTo === "ai"
-          ? { hrefai: "/ai" }
-          : { hrefweb: "/web" };
+  /* Every pin on every page, always relative. Passing only the current
+     section's href left the others falling back to the absolute production
+     URLs baked into island.js, which sent people off the deployment. */
+  const hrefs = { hreftuition: "/tuition", hrefai: "/ai", hrefweb: "/web" };
 
   return (
     <div style={{ position: "absolute", inset: 0 }}>
