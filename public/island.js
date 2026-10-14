@@ -54,6 +54,7 @@
   };
   var PINS = ["tuition", "ai", "web"];
   var LAKESIDE = "4,3", GATE = "5,10";
+  var HELLOS = ["Hello!", "Alright?", "Morning!", "Nice to meet you.", "Drop me a line."];
   /* Where visitors start and finish a walk: the three building doors, the park
      gate and the lakeside. Everything else is just path between them. */
   var STOPS = [ST.tuition.door.join(","), ST.ai.door.join(","), ST.web.door.join(","), GATE, LAKESIDE];
@@ -147,6 +148,16 @@
       hm.addEventListener("mouseenter", function () { hm.style.transform = "translate(-50%,-100%) scale(1.08)"; });
       hm.addEventListener("mouseleave", function () { hm.style.transform = "translate(-50%,-100%)"; });
       this.pinLayer.insertBefore(hm, this.pinLayer.firstChild);
+      /* Tap David and he stops for a moment to say hello. The bubble is DOM
+         rather than canvas so the text stays crisp at any zoom. */
+      var say = this.sayBubble = document.createElement("div");
+      say.style.cssText = "position:absolute;left:0;top:0;transform:translate(-50%,-100%);pointer-events:none;display:none;padding:5px 12px;border-radius:999px;background:#FFFFFF;color:#1C1A3A;font:700 0.82rem " + FONT + ";white-space:nowrap;box-shadow:0 6px 18px rgba(20,16,60,0.28)";
+      this.pinLayer.appendChild(say);
+      this.c.addEventListener("click", function (e) {
+        /* Ignore the click that ends a drag. */
+        if (self.dragMoved) { self.dragMoved = false; return; }
+        self.greetIfHit(e.clientX, e.clientY);
+      });
       this.onExtFocus = function (e) { self.focusId = e.detail || null; };
       window.addEventListener("dh-focus", this.onExtFocus);
       this.r = rng(1851); this.t = 0; this.focusId = null; this.w = 0; this.h = 0;
@@ -175,7 +186,8 @@
       ["tuition", "ai", "web"].forEach(function (kind) {
         for (var n = 0; n < mix[kind]; n++) { self.groups.push(self.newGroup(kind)); }
       });
-      this.groups.push(this.newDavid());
+      this.david = this.newDavid();
+      this.groups.push(this.david);
       this.last = performance.now();
       var loop = function (now) {
         if (!self.isConnected) { return; }
@@ -203,12 +215,13 @@
       c.style.cursor = "grab";
       c.addEventListener("pointerdown", function (e) {
         if (e.button) { return; }
-        self.dragging = true; self.dragX = e.clientX; self.dragA = self.angle;
+        self.dragging = true; self.dragX = e.clientX; self.dragA = self.angle; self.dragMoved = false;
         c.style.cursor = "grabbing";
         try { c.setPointerCapture(e.pointerId); } catch (err) { /* capture is best-effort */ }
       });
       c.addEventListener("pointermove", function (e) {
         if (!self.dragging) { return; }
+        if (Math.abs(e.clientX - self.dragX) > 4) { self.dragMoved = true; }
         self.angle = self.dragA + (e.clientX - self.dragX) * 0.006;
       });
       var release = function (e) {
@@ -226,6 +239,7 @@
         else if (e.key === "+" || e.key === "=") { self.targetZoom = clamp(self.targetZoom * 1.35, 0.6, 3); }
         else if (e.key === "-" || e.key === "_") { self.targetZoom = clamp(self.targetZoom / 1.35, 0.6, 3); }
         else if (e.key === "0") { self.targetAngle = 0; self.targetZoom = 1; }
+        else if (e.key === "Enter" || e.key === " ") { self.greet(); }
         else { return; }
         e.preventDefault();
       });
@@ -282,6 +296,31 @@
       var home = ST[kind].door.join(",");
       var start = r() < 0.55 ? home : this.nextStop(null, home);
       return { kind: kind, home: home, inside: !!INDOORS[start], route: route(start, this.nextStop(start, home)), i: 0, f: 0, speed: (kind === "tuition" ? 0.45 : 0.55) + r() * 0.4, wait: r() * 6, members: m, jx: r() * 0.4 - 0.2, jy: r() * 0.4 - 0.2 };
+    }
+    /* Did that tap land on David? Compare against where he was last drawn. */
+    greetIfHit(clientX, clientY) {
+      var d = this.david;
+      if (!d || d.inside) { return; }
+      var box = this.getBoundingClientRect();
+      var g = this.groupPos(d), q = this.P(iso(g.x, g.y, 10));
+      var dx = (clientX - box.left) - q.x, dy = (clientY - box.top) - q.y;
+      var reach = Math.max(18, 26 * this.s);
+      if (dx * dx + dy * dy > reach * reach) { return; }
+      this.greet();
+    }
+    greet() {
+      var d = this.david;
+      if (!d || d.inside) { return; }
+      this.sayText = HELLOS[(this.r() * HELLOS.length) | 0];
+      this.sayUntil = performance.now() + 2600;
+      d.wait = Math.max(d.wait, 2.6);          /* he stops to talk */
+    }
+    /* Where a group is on its current segment, in grid coords. Used by both
+       the draw pass and the name tag that follows David. */
+    groupPos(gp) {
+      var a = gp.route[Math.min(gp.i, gp.route.length - 1)];
+      var b = gp.route[Math.min(gp.i + 1, gp.route.length - 1)];
+      return { x: lerp(a[0], b[0], gp.f) + 0.5 + gp.jx, y: lerp(a[1], b[1], gp.f) + 0.5 + gp.jy };
     }
     /* The man himself: one bald, dark-bearded figure doing the rounds. No home
        building, so he visits all three evenly rather than favouring one. */
@@ -547,8 +586,7 @@
       LAMPS.forEach(function (l) { objs.push({ d: depth(l[0], l[1]) + 1, f: function () { self.box(l[0] + 0.15, l[1] + 0.15, 0.06, 0.06, 26, [60, 60, 80]); self.circle(iso(l[0] + 0.15, l[1] + 0.15, 28), 3.5, lit ? "#FFE08A" : "#D8D8E8"); } }); });
       this.groups.forEach(function (gp) {
         if (gp.inside) { return; }
-        var a = gp.route[Math.min(gp.i, gp.route.length - 1)], b = gp.route[Math.min(gp.i + 1, gp.route.length - 1)];
-        var bx = lerp(a[0], b[0], gp.f) + 0.5 + gp.jx, by = lerp(a[1], b[1], gp.f) + 0.5 + gp.jy;
+        var gp0 = self.groupPos(gp), bx = gp0.x, by = gp0.y;
         gp.members.forEach(function (m) { var px = bx + m.ox, py = by + m.oy; objs.push({ d: depth(px, py), f: function () { self.person(px, py, m); } }); });
       });
       objs.sort(function (a, b) { return a.d - b.d; });
@@ -570,8 +608,23 @@
         var half = el.offsetWidth / 2 + 6, lo = self.sr.x + half, hi = self.sr.x + self.sr.w - half;
         return hi > lo ? clamp(x, lo, hi) : x;
       };
-      var gq = self.P(iso(ST.gate.gx, ST.gate.gy, 94)), gb = reduce ? 0 : Math.sin(self.t * 2 + 1.3) * 2.5;
-      self.homePin.style.left = penX(self.homePin, gq.x) + "px"; self.homePin.style.top = (gq.y + gb) + "px";
+      /* The name tag floats over David rather than over the gate. It follows
+         him exactly — no penning — so it never detaches from the figure, and
+         instead hides when he is indoors or has walked out of the park's
+         column, which is what kept pins off the headline. */
+      var gb = reduce ? 0 : Math.sin(self.t * 2 + 1.3) * 2.5;
+      var dg = self.david, dq = dg ? self.P(iso(self.groupPos(dg).x, self.groupPos(dg).y, 30)) : null;
+      var halfTag = self.homePin.offsetWidth / 2;
+      var tagOk = !!dq && !dg.inside && dq.x - halfTag >= self.sr.x && dq.x + halfTag <= self.sr.x + self.sr.w;
+      self.homePin.style.display = tagOk ? "flex" : "none";
+      if (tagOk) { self.homePin.style.left = dq.x + "px"; self.homePin.style.top = (dq.y + gb) + "px"; }
+      var saying = tagOk && self.sayUntil && performance.now() < self.sayUntil;
+      self.sayBubble.style.display = saying ? "block" : "none";
+      if (saying) {
+        self.sayBubble.textContent = self.sayText;
+        self.sayBubble.style.left = dq.x + "px";
+        self.sayBubble.style.top = (dq.y + gb - self.homePin.offsetHeight - 8) + "px";
+      }
       PINS.forEach(function (id) {
         var a = ST[id], q = self.P(iso(a.gx, a.gy, a.top + 14)), el = self.pins[id], zt = self.getAttribute("zoomto"), on = (self.focusId || zt) === id;
         el.style.display = zt && zt !== id ? "none" : "flex";

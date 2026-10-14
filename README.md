@@ -129,6 +129,18 @@ rather than favouring one. `person()` grew a `beard` option for him: the mirror
 of the existing hair cap, drawn across the lower half of the head. His skin
 tone is `SKIN[0]`; change that one value in `newDavid()` to adjust it.
 
+The **name tag floats over him** rather than sitting on the gate, following him
+exactly so it never detaches — it hides instead when he goes indoors or walks
+out of the park's column, which is what keeps pins off the headline. It still
+links home.
+
+**Tap him and he stops to say hello.** He is painted on canvas, not a DOM node,
+so `greetIfHit()` projects his current position and tests the click against it;
+the bubble itself is DOM so the text stays crisp at any zoom. A drag sets
+`dragMoved` and is ignored, so spinning the park never trips the greeting, and
+Enter or Space greets from the keyboard. Lines live in `HELLOS`, and this one
+works on every page, not just the homepage.
+
 Arriving at one of the three buildings, a group goes **inside** — `g.inside` is
 set for the duration of the wait and `draw()` skips them — then comes back out
 of the same door when the wait ends. The gate and the lakeside are open air, so
