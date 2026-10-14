@@ -1,5 +1,6 @@
 import type { ReactNode } from "react";
 import Island from "./Island";
+import IslandControls from "./IslandControls";
 import { amber, gutter, display, ink, MAILTO, sky, type Section } from "./tokens";
 
 const shadow = (n: number) => `0 ${n}px ${n * 6}px rgba(20, 16, 60, 0.5)`;
@@ -138,6 +139,9 @@ export default function Hero({
               Email me →
             </a>
           )}
+          {/* The park animates here too, so the pause control belongs here too —
+              and it is what replays the viewer's stored motion choice. */}
+          <IslandControls />
         </div>
         <div
           id="island-spot"

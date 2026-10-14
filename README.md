@@ -24,11 +24,12 @@ there are four routes back to the landing page from anywhere. The header pill
 takes the amber fill for the page you are on, Home included.
 
 **The map is navigation, so it shows every destination on every page.** All
-three pins are always present and always relative links, and the park is framed
-the same way everywhere. Zooming a section page into its own landmark used to
-push the other two off screen, which left the map with a single pin pointing at
-the page you were already on — a dead end. The current section is signalled by
-the focus ring and its amber pin instead of by the framing.
+four pins — the three sections plus a dark, unnumbered **Home** pin on the park
+gate — are always present and always relative links, and the park is framed the
+same way everywhere. Zooming a section page into its own landmark used to push
+the other two off screen, which left the map with a single pin pointing at the
+page you were already on — a dead end. The current section is signalled by the
+focus ring and its amber pin instead of by the framing.
 | `/tuition` | Student tuition | GCSE & A-Level. Carries the results figure and the note for parents. |
 | `/ai` | AI for adults | One-to-one sessions, plus free intro sessions for community hubs. |
 | `/web` | Web design | Two live builds and how-I-work. |
@@ -84,7 +85,9 @@ The element listens on two window events, so nothing needs a ref to it:
 - `dh-motion` — `detail` takes `{ on: true | false }` to force the park moving
   or still, or `{}` to go back to following the system preference.
 
-`components/IslandControls.tsx` is the only caller of both, and it deliberately
+`components/IslandControls.tsx` is the only caller of both, and it is mounted
+on every page the park appears on — the park animates on the section pages too,
+so the control to stop it belongs there too. It deliberately
 renders **only** a Pause/Animate button. Spinning and zooming are left
 undocumented on the page so finding them is a small reward; motion that runs
 indefinitely still needs a visible way to stop it, so that control stays.
@@ -117,6 +120,13 @@ The motion preference is read **live**, not once at load. Chrome's Battery
 Saver reports reduced motion while it is active, and a one-shot read left the
 park frozen for the life of the page once that happened. The `dh-motion`
 override lets a viewer start the park regardless of what the browser reports.
+
+`island.js` reads the stored `dh-motion` choice from `localStorage` itself, at
+module scope, rather than waiting to be told. Replaying it only from the React
+control meant the preference held wherever that control was mounted and nowhere
+else; reading it in the element makes one Pause or Animate press apply across
+every page. With no stored choice the system preference still decides, so the
+default stays correct for people who genuinely need stillness.
 
 #### Who walks where
 

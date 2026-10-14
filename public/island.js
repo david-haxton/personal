@@ -98,6 +98,14 @@
   var motionQuery = window.matchMedia ? window.matchMedia("(prefers-reduced-motion: reduce)") : null;
   var override = null, reduce = motionQuery ? motionQuery.matches : false;
   function syncMotion() { reduce = override === null ? (motionQuery ? motionQuery.matches : false) : !override; }
+  /* Read the viewer's stored choice up front. Previously only the Pause
+     control replayed it, and that lives on the homepage, so the section pages
+     ignored it and sat frozen for anyone whose browser reports reduced motion. */
+  try {
+    var savedMotion = window.localStorage.getItem("dh-motion");
+    if (savedMotion === "on" || savedMotion === "off") { override = savedMotion === "on"; }
+  } catch (e) { /* private mode */ }
+  syncMotion();
   if (motionQuery) {
     if (motionQuery.addEventListener) { motionQuery.addEventListener("change", syncMotion); }
     else if (motionQuery.addListener) { motionQuery.addListener(syncMotion); }
@@ -128,6 +136,13 @@
       this.appendChild(this.pinLayer);
       this.pins = {};
       var self = this;
+      /* Home sits on the park gate as its own kind of marker — dark, unnumbered
+         — so the map always has a way back to the landing page. */
+      var hm = this.homePin = document.createElement("a");
+      hm.href = this.getAttribute("hrefhome") || "/";
+      hm.textContent = "Home";
+      hm.style.cssText = "position:absolute;left:0;top:0;transform:translate(-50%,-100%);pointer-events:auto;display:flex;align-items:center;padding:6px 16px;border-radius:999px;background:#1C1A3A;color:#F4F3FB;text-decoration:none;font:800 0.9rem " + FONT + ";white-space:nowrap;box-shadow:0 6px 18px rgba(20,16,60,0.32)";
+      this.pinLayer.appendChild(hm);
       PINS.forEach(function (id) {
         var a = ST[id], el = document.createElement("a");
         el.href = self.getAttribute("href" + id) || a.href;
@@ -278,7 +293,7 @@
     /* Cache each pin's intrinsic size. They never change on their own — the
        zoom scaling is a transform, which does not affect offsetWidth. */
     measurePins() {
-      var all = PINS.map(function (id) { return this.pins[id]; }, this);
+      var all = [this.homePin].concat(PINS.map(function (id) { return this.pins[id]; }, this));
       all.forEach(function (el) { if (el) { el.__w = el.offsetWidth; el.__h = el.offsetHeight; } });
     }
     /* Where a group is on its current segment, in grid coords. Used by both
@@ -584,6 +599,10 @@
         var half = (el.__w || 0) / 2 + 6, lo = self.sr.x + half, hi = self.sr.x + self.sr.w - half;
         return hi > lo ? clamp(x, lo, hi) : x;
       };
+      var gq = self.P(iso(ST.gate.gx, ST.gate.gy, 94));
+      var gb = reduce ? 0 : Math.sin(self.t * 2 + 1.3) * 2.5;
+      self.homePin.style.left = penX(self.homePin, gq.x) + "px";
+      self.homePin.style.top = (gq.y + gb) + "px";
       PINS.forEach(function (id) {
         var a = ST[id], q = self.P(iso(a.gx, a.gy, a.top + 14)), el = self.pins[id], zt = self.getAttribute("zoomto"), on = (self.focusId || zt) === id;
         /* Every destination is always on the map. Hiding the other two left a

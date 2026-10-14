@@ -14,7 +14,7 @@ export default function Island({ zoomTo }: { zoomTo?: Section }) {
   /* Every pin on every page, always relative. Passing only the current
      section's href left the others falling back to the absolute production
      URLs baked into island.js, which sent people off the deployment. */
-  const hrefs = { hreftuition: "/tuition", hrefai: "/ai", hrefweb: "/web" };
+  const hrefs = { hrefhome: "/", hreftuition: "/tuition", hrefai: "/ai", hrefweb: "/web" };
 
   return (
     <div style={{ position: "absolute", inset: 0 }}>
