@@ -106,6 +106,12 @@ Counts are weighted by **people, not groups**: a tuition group is 2–3 people
 and a web group 1–2, so equal group counts would leave `/web` half as
 populated. Every page lands near 30 figures with roughly 70% its own kind.
 
+Groups walk door to door. `STOPS` lists the places a walk can start or end —
+the three building doors, the park gate and the lakeside — and `nextStop()`
+picks a new one on arrival, never where the group already is, favouring its own
+section's building. They spawn standing at a door rather than mid-path, with
+staggered waits so they don't all set off at once.
+
 ## Still to do before launch
 
 - **Self-host or subset Schibsted Grotesk.** It currently loads from Google

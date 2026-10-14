@@ -54,6 +54,9 @@
   };
   var PINS = ["tuition", "ai", "web"];
   var LAKESIDE = "4,3", GATE = "5,10";
+  /* Where visitors start and finish a walk: the three building doors, the park
+     gate and the lakeside. Everything else is just path between them. */
+  var STOPS = [ST.tuition.door.join(","), ST.ai.door.join(","), ST.web.door.join(","), GATE, LAKESIDE];
   var TREES = [[0, 6], [0, 8], [1, 9], [0, 10], [2, 10], [1, 5], [3, 9], [8, 10], [9, 9], [10, 8], [10, 5], [10, 10], [7, 0], [5, 0], [6, 1], [3, 5], [8, 5], [10, 3], [7, 9], [4, 0], [4, 1], [9, 5], [0, 5]];
   var LAMPS = [[5, 4], [5, 6], [5, 9], [4, 7], [6, 6]];
 
@@ -113,7 +116,11 @@
       this.appendChild(c); this.ctx = c.getContext("2d");
       this.pinLayer = document.createElement("nav");
       this.pinLayer.setAttribute("aria-label", "Park map");
-      this.pinLayer.style.cssText = "position:absolute;inset:0;pointer-events:none";
+      /* z-index lifts the pins above the hero copy. On /ai the headline lands
+         right over the home pin and, because the text column is pointer-events
+         auto, it swallowed the click. The layer itself stays pointer-events
+         none, so only the pins themselves take the cursor back. */
+      this.pinLayer.style.cssText = "position:absolute;inset:0;pointer-events:none;z-index:3";
       this.appendChild(this.pinLayer);
       this.pins = {};
       var self = this;
@@ -260,8 +267,19 @@
         var pairs = r() < 0.35 ? 2 : 1;
         for (var q = 0; q < pairs; q++) { m.push({ b: this.pick(["#1C1A3A", "#F25C54", "#FFB320", "#2BB5A8", "#4F7CE0"]), h: this.pick(SKIN), hair: this.pick(HAIR_DARK), sc: 1, laptop: true, ox: q * 0.22 - 0.09, oy: q * 0.08 }); }
       }
-      var home = ST[kind].door.join(","), keys = Object.keys(PATH), start = keys[(r() * keys.length) | 0];
-      return { kind: kind, home: home, route: route(start, home), i: 0, f: r(), speed: (kind === "tuition" ? 0.45 : 0.55) + r() * 0.4, wait: r() * 4, members: m, jx: r() * 0.4 - 0.2, jy: r() * 0.4 - 0.2 };
+      /* Start standing at a door rather than mid-path, so they read as coming
+         out of a building, and head for a different one. Staggered waits stop
+         them all setting off at once. */
+      var home = ST[kind].door.join(",");
+      var start = r() < 0.55 ? home : this.nextStop(null, home);
+      return { kind: kind, home: home, route: route(start, this.nextStop(start, home)), i: 0, f: 0, speed: (kind === "tuition" ? 0.45 : 0.55) + r() * 0.4, wait: r() * 6, members: m, jx: r() * 0.4 - 0.2, jy: r() * 0.4 - 0.2 };
+    }
+    /* Pick somewhere to walk to, never where we already are. A group favours
+       its own section's building but does the rounds of the whole park. */
+    nextStop(from, home) {
+      if (home && home !== from && this.r() < 0.4) { return home; }
+      var opts = STOPS.filter(function (s) { return s !== from; });
+      return opts[(this.r() * opts.length) | 0];
     }
     step(dt) {
       this.t += dt; var self = this;
@@ -271,9 +289,10 @@
         while (g.f >= 1) {
           g.f -= 1; g.i++;
           if (g.i >= g.route.length - 1) {
+            /* Arrived somewhere: pause at the door, then walk to another one. */
             var here = g.route[g.route.length - 1].join(",");
-            var dest = here === g.home ? (self.r() < 0.3 ? LAKESIDE : GATE) : g.home;
-            g.route = route(here, dest); g.i = 0; g.f = 0; g.wait = (here === g.home ? 2.5 : 0.8) + self.r() * 2.5; return;
+            g.route = route(here, self.nextStop(here, g.home)); g.i = 0; g.f = 0;
+            g.wait = (here === g.home ? 2.5 : 1.2) + self.r() * 2.5; return;
           }
         }
       });
@@ -479,15 +498,23 @@
         for (var k2 = 0; k2 < 40; k2++) { var an = k2 / 40 * Math.PI * 2; ring.push(iso(fa.gx + Math.cos(an) * rad2, fa.gy + Math.sin(an) * rad2, 0)); }
         this.poly(ring, "rgba(255,179,32,0.45)");
       }
+      /* The boat circles the lake; one dinosaur gives chase, trailing it round
+         the shore. Both go through the sorted pass so the one in front wins. */
       var ba = this.t * 0.25, bgx = 2 + 1.5 * Math.cos(ba), bgy = 2 + 1.5 * Math.sin(ba);
-      this.box(bgx, bgy, 0.42, 0.26, 6, hex("#F25C54")); this.person(bgx, bgy, { b: "#FFB320", h: "#F3D2B3", hair: "#5A3A22" }, 6);
+      var ca = ba - 0.6, cgx = 2 + 1.95 * Math.cos(ca), cgy = 2 + 1.95 * Math.sin(ca);
+      /* Face the way it is running: screen-x velocity of the orbit. */
+      var cdir = -Math.sin(ca) >= 0 ? 1 : -1;
 
       var lit = night > 0.45, objs = [];
+      objs.push({ d: depth(bgx, bgy), f: function () {
+        self.box(bgx, bgy, 0.42, 0.26, 6, hex("#F25C54"));
+        self.person(bgx, bgy, { b: "#FFB320", h: "#F3D2B3", hair: "#5A3A22" }, 6);
+      } });
       /* Depth is the rotated screen-y axis — plain gx + gy only sorts correctly
          at the unrotated angle. The small constants are unchanged tie-breaks. */
       Object.keys(ST).forEach(function (id) { var a = ST[id]; objs.push({ d: depth(a.gx, a.gy) + 0.6, f: function () { self.station(id, lit); } }); });
       objs.push({ d: depth(9.5, 1.5) + 0.6, f: function () { self.mast(9.5, 1.5, night); } });
-      objs.push({ d: depth(1.5, 1.6), f: function () { self.dino(1.5, 1.6, PAL.dino1, 1); } });
+      objs.push({ d: depth(cgx, cgy), f: function () { self.dino(cgx, cgy, PAL.dino1, cdir); } });
       objs.push({ d: depth(2.5, 2.4), f: function () { self.dino(2.5, 2.4, PAL.dino2, -1); } });
       objs.push({ d: depth(3.7, 10.4), f: function () { self.sphinx(3.7, 10.4); } });
       objs.push({ d: depth(7.3, 10.4), f: function () { self.sphinx(7.3, 10.4); } });
