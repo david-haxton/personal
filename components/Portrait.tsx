@@ -1,14 +1,20 @@
 /**
- * Two crops of one sitting. The block uses the original 4:5 frame, which its
- * aspect matches exactly. The circle needs its own square: object-fit can only
- * crop a 4:5 source down to square, never zoom past it, so a shared file would
- * leave the face small among shirt and wall at 60px.
+ * Two registers, one per job.
+ *
+ * The block is the real photograph, on the tuition About card, where someone
+ * is deciding whether to trust me and a face has to be a face. Its 4:5 aspect
+ * matches the frame exactly, so nothing is cropped.
+ *
+ * The circle is a drawn character, because the hero is flat vector on a
+ * gradient and a photograph sat in it as a different kind of object. It uses
+ * the island’s own palette, so it reads as one of the figures walking around
+ * the park rather than a picture pasted over them.
  */
 export const HAS_PHOTO: boolean = true;
 
 const SRC = {
   block: "/images/david-haxton.jpg",
-  circle: "/images/david-haxton-square.jpg",
+  circle: "/images/david-haxton-avatar.svg",
 };
 const ALT = "David Haxton";
 
