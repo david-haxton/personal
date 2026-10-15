@@ -1,15 +1,15 @@
 /**
- * TODO: drop the real photo in at public/images/david-haxton.jpg, then flip
- * HAS_PHOTO to true. Every placeholder on the site reads from here, so that
- * one change lights them all up at once.
- *
- * Shoot it against a plain mid-tone wall with soft light from one side, head
- * and shoulders, with room around the head — that single frame then crops to
- * both the hero circle and the About block.
+ * Two crops of one sitting. The block uses the original 4:5 frame, which its
+ * aspect matches exactly. The circle needs its own square: object-fit can only
+ * crop a 4:5 source down to square, never zoom past it, so a shared file would
+ * leave the face small among shirt and wall at 60px.
  */
-export const HAS_PHOTO: boolean = false;
+export const HAS_PHOTO: boolean = true;
 
-const SRC = "/images/david-haxton.jpg";
+const SRC = {
+  block: "/images/david-haxton.jpg",
+  circle: "/images/david-haxton-square.jpg",
+};
 const ALT = "David Haxton";
 
 export default function Portrait({
@@ -60,7 +60,7 @@ export default function Portrait({
     <span className={duotone ? "portrait-duotone" : undefined} style={frame}>
       {/* eslint-disable-next-line @next/next/no-img-element */}
       <img
-        src={SRC}
+        src={SRC[shape]}
         alt={ALT}
         width={size}
         height={height}

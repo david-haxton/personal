@@ -99,7 +99,15 @@ export default function Tuition() {
             <div style={{ flex: "1 1 320px", minWidth: 0 }}>
               <h2 style={h2}>About</h2>
               <p
-                style={{ margin: "0 0 14px", color: muted, textWrap: "pretty" }}
+                style={{
+                  margin: "0 0 14px",
+                  color: muted,
+                  /* A reading measure, which also stops the copy running out
+                     flat beside a 250px portrait and leaving the card empty
+                     below it. */
+                  maxWidth: "58ch",
+                  textWrap: "pretty",
+                }}
               >
                 I’m Head of Computer Science at an independent school in London,
                 and I’ve taught GCSE and A-Level for over fifteen years. I have
