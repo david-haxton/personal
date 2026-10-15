@@ -50,8 +50,8 @@ export default function Ai() {
             labelColor={TEAL_DEEP}
           >
             What these models are good at and where they fall over, managing
-            context properly, and output you can trust in the real world — not
-            just in a demo.
+            context properly, and output you can trust in the real world,
+            not just in a demo.
           </DetailCard>
           <DetailCard
             label="Approach"
@@ -59,8 +59,8 @@ export default function Ai() {
             accent={teal}
             labelColor={TEAL_DEEP}
           >
-            Sessions at your pace, aimed at what you actually do — not a generic
-            course someone else wrote.
+            Sessions at your pace, aimed at what you actually do, not a
+            generic course someone else wrote.
           </DetailCard>
         </CardGrid>
 
@@ -86,7 +86,7 @@ export default function Ai() {
                 Community hubs
               </h2>
               <p style={{ margin: 0, textWrap: "pretty" }}>
-                If you run a community hub, library or local group and would
+                If you run a community hub, library, or local group and would
                 like a session on AI for your members, I’ll come and run one for
                 free. Start at zero, no jargon. Just email me.
               </p>

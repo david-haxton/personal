@@ -5,8 +5,8 @@ import "./globals.css";
 export const metadata: Metadata = {
   metadataBase: new URL("https://www.davidhaxton.co.uk"),
   title: {
-    default: "David Haxton — Computer science teacher and builder",
-    template: "%s — David Haxton",
+    default: "David Haxton · Computer science teacher and builder",
+    template: "%s · David Haxton",
   },
   description:
     "One-to-one GCSE & A-Level computer science tuition, AI for adults at any starting point, and web work built end to end.",

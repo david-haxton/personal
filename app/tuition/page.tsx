@@ -64,11 +64,12 @@ export default function Tuition() {
               color: muted,
               maxWidth: "70ch",
               textWrap: "pretty",
+              fontStyle: "italic",
             }}
           >
-            Compared with the national grade 7–9 rate for each year. For 2025,
-            only an all-boards national figure was published, so that is the one
-            used.
+            Each year is compared with the national grade 7–9 rate for that
+            year. For 2025, only an all-boards national figure had been
+            published, so that is the one used.
           </p>
         </StubCard>
 
@@ -77,8 +78,8 @@ export default function Tuition() {
             Whichever spec your school runs, we work to that one.
           </DetailCard>
           <DetailCard label="Focus" title="Where marks go" accent={amber}>
-            Algorithms, programming, systems and exam craft — the four places a
-            grade 7 quietly turns into a grade 9.
+            Algorithms, programming, systems and exam craft: the four places
+            a grade 7 quietly turns into a grade 9.
           </DetailCard>
           <DetailCard label="Approach" title="Straight feedback" accent={amber}>
             No cut corners and no false praise. You’ll always know exactly
@@ -145,9 +146,10 @@ export default function Tuition() {
             </h2>
             <p style={{ margin: 0, color: muted, textWrap: "pretty" }}>
               The gap between a grade 7 and a grade 9 is very often exam
-              technique, not subject knowledge — reading the command word,
-              structuring a longer answer, managing time under pressure. That’s
-              specifically what I work on, alongside the content itself.
+              technique, not subject knowledge. Reading the command word,
+              structuring a longer answer, managing time under pressure:
+              that’s specifically what I work on, alongside the content
+              itself.
             </p>
           </div>
         </div>
