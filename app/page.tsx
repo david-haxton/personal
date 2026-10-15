@@ -36,7 +36,7 @@ const DOORS = [
     number: "03",
     kicker: "Web",
     title: "Web design",
-    body: "Two live builds, made end to end. Proof of craft, not a sales pitch.",
+    body: "Two live builds, made end to end.",
     accent: coral,
   },
 ];
@@ -82,7 +82,34 @@ export default function Home() {
             pointerEvents: "none",
           }}
         >
-          <div style={{ flex: "1 1 400px", minWidth: 0, pointerEvents: "auto" }}>
+          <div
+            style={{
+              flex: "1 1 540px",
+              minWidth: 0,
+              pointerEvents: "auto",
+              display: "flex",
+              flexWrap: "wrap",
+              alignItems: "flex-start",
+              gap: "20px 24px",
+            }}
+          >
+            {/* TODO: drop the real portrait in at public/images/david-haxton.jpg
+                and swap this box for the <img> commented beneath it. */}
+            <div
+              aria-hidden="true"
+              style={{
+                flex: "0 0 auto",
+                width: 148,
+                height: 186,
+                borderRadius: 18,
+                background: "rgba(28, 26, 58, 0.55)",
+                border: "3px solid rgba(255, 255, 255, 0.22)",
+                boxShadow: "0 12px 30px rgba(20, 16, 60, 0.35)",
+              }}
+            />
+            {/* <img src="/images/david-haxton.jpg" alt="David Haxton"
+                 width={148} height={186} style={{ ... }} /> */}
+            <div style={{ flex: "1 1 300px", minWidth: 0 }}>
             <p
               style={{
                 margin: "0 0 16px",
@@ -103,7 +130,7 @@ export default function Home() {
                 letterSpacing: "-0.03em",
                 lineHeight: 1.02,
                 margin: "0 0 22px",
-                maxWidth: "13ch",
+                maxWidth: "16ch",
                 textWrap: "balance",
                 textShadow: "0 3px 22px rgba(20, 16, 60, 0.5)",
               }}
@@ -118,10 +145,12 @@ export default function Home() {
                 textShadow: "0 2px 14px rgba(20, 16, 60, 0.6)",
               }}
             >
-              I teach computer science, and I build things. Pick where
-              you&rsquo;d like to start.
+              Head of Computer Science at a London independent school, with
+              fifteen years teaching GCSE and A-Level. Before that, a developer
+              and project manager at BT. Pick where you&rsquo;d like to start.
             </p>
             <IslandControls />
+            </div>
           </div>
           <div
             id="island-spot"

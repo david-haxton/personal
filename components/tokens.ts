@@ -16,6 +16,13 @@ export const display = '"Schibsted Grotesk", system-ui, sans-serif';
 
 export const MAILTO = "mailto:hello@davidhaxton.co.uk";
 
+/**
+ * TODO: still the literal placeholder. Swap this one value for the real
+ * booking link and every "Book a call" button on the site follows.
+ * Until then these buttons resolve to /BOOKING_URL and 404.
+ */
+export const BOOKING_URL = "BOOKING_URL";
+
 /** Horizontal rhythm shared by the bars and every section. */
 export const gutter = "clamp(16px, 4vw, 48px)";
 

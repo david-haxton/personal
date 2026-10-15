@@ -1,7 +1,8 @@
 import type { ReactNode } from "react";
+import BookCta from "./BookCta";
 import Island from "./Island";
 import IslandControls from "./IslandControls";
-import { amber, gutter, display, ink, MAILTO, sky, type Section } from "./tokens";
+import { gutter, display, ink, sky, type Section } from "./tokens";
 
 const shadow = (n: number) => `0 ${n}px ${n * 6}px rgba(20, 16, 60, 0.5)`;
 
@@ -119,26 +120,7 @@ export default function Hero({
           >
             {lead}
           </p>
-          {cta && (
-            <a
-              href={MAILTO}
-              className="btn-amber"
-              style={{
-                display: "inline-flex",
-                alignItems: "center",
-                gap: 8,
-                padding: "11px 24px",
-                borderRadius: 999,
-                background: amber,
-                color: ink,
-                fontWeight: 800,
-                textDecoration: "none",
-                boxShadow: "0 8px 24px rgba(20, 16, 60, 0.3)",
-              }}
-            >
-              Email me →
-            </a>
-          )}
+          {cta && <BookCta onDark />}
           {/* The park animates here too, so the pause control belongs here too —
               and it is what replays the viewer's stored motion choice. */}
           <IslandControls />

@@ -1,4 +1,4 @@
-import { amber, gutter, display, ink, MAILTO, page, type Section } from "./tokens";
+import { amber, BOOKING_URL, gutter, display, ink, page, type Section } from "./tokens";
 
 /* Home sits in the nav alongside the sections rather than relying on the
    wordmark, which only reads as a link if you already know the convention. */
@@ -75,7 +75,7 @@ export default function SiteHeader({ active }: { active?: Section }) {
         })}
       </nav>
       <a
-        href={MAILTO}
+        href={BOOKING_URL}
         className="btn-amber"
         style={{
           display: "inline-flex",
@@ -88,7 +88,7 @@ export default function SiteHeader({ active }: { active?: Section }) {
           textDecoration: "none",
         }}
       >
-        Say hello
+        Book a call
       </a>
     </header>
   );

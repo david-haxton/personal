@@ -11,7 +11,7 @@ import { amber, coral, display, ink, MAILTO } from "@/components/tokens";
 export const metadata: Metadata = {
   title: "Web design",
   description:
-    "Two live builds made end to end: design, front end and logic. Proof of craft, not a sales pitch.",
+    "Two live builds made end to end: design, front end and logic.",
 };
 
 const CORAL_DEEP = "#9B2820";
@@ -43,7 +43,7 @@ export default function Web() {
         eyebrow="Built end to end"
         accent={coral}
         zoomTo="web"
-        lead="Not a portfolio of mockups. Two live builds you can open right now and use, designed and built from scratch."
+        lead="Two live builds you can open right now and use: design, front end and logic, all mine."
       >
         Things I’ve <span style={{ color: amber }}>actually</span> built.
       </Hero>

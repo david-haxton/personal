@@ -60,6 +60,33 @@ img {
   outline-offset: 3px;
 }
 
+/* FAQ disclosures. Native <details> already handles Enter, Space and the
+   expanded state; all that is needed is to drop the default marker and point
+   our own chevron down when the item opens. */
+.faq summary {
+  list-style: none;
+  cursor: pointer;
+}
+
+.faq summary::-webkit-details-marker {
+  display: none;
+}
+
+.faq-chevron {
+  color: var(--amber-deep);
+  transition: transform 0.18s ease;
+}
+
+.faq[open] .faq-chevron {
+  transform: rotate(90deg);
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .faq-chevron {
+    transition: none;
+  }
+}
+
 /* The island is decorative; it never blocks the headline from being read. */
 dh-island {
   pointer-events: auto;

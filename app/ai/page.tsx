@@ -1,6 +1,8 @@
 import type { Metadata } from "next";
+import BookCta from "@/components/BookCta";
 import CardGrid from "@/components/CardGrid";
 import DetailCard from "@/components/DetailCard";
+import Faq from "@/components/Faq";
 import Hero from "@/components/Hero";
 import Main from "@/components/Main";
 import SiteFooter from "@/components/SiteFooter";
@@ -15,6 +17,33 @@ export const metadata: Metadata = {
 };
 
 const TEAL_DEEP = "#0F5C55";
+
+const QUESTIONS = [
+  {
+    q: "What does it cost?",
+    a: "£75 for an hour, or £110 for 90 minutes. Most people find 90 minutes works better: there’s time to actually build something rather than just talk about it.",
+  },
+  {
+    q: "I’ve never used AI. Is this for me?",
+    a: "Yes. We start from your first ever prompt. No jargon, nothing assumed.",
+  },
+  {
+    q: "I already use it at work. Is this for me?",
+    a: "Also yes. We’ll work on your real tasks: getting reliable output, managing context, and knowing when not to trust the answer.",
+  },
+  {
+    q: "Where do sessions happen?",
+    a: "Online, on Google Meet. Bring a laptop and something you’d like to get done.",
+  },
+  {
+    q: "Do I need to share work documents?",
+    a: "No. We can use made-up examples that mirror your real work, so nothing confidential leaves your hands.",
+  },
+  {
+    q: "Do you do group sessions?",
+    a: "For community hubs, libraries and local groups, I’ll run a free intro session. Just email me.",
+  },
+];
 
 export default function Ai() {
   return (
@@ -63,6 +92,34 @@ export default function Ai() {
             generic course someone else wrote.
           </DetailCard>
         </CardGrid>
+
+        <section
+          style={{
+            background: "#FFFFFF",
+            borderRadius: 18,
+            padding: "26px 28px",
+            boxShadow: "0 6px 20px rgba(20, 16, 60, 0.08)",
+          }}
+        >
+          <h2
+            style={{
+              fontFamily: display,
+              fontWeight: 800,
+              fontSize: "1.4rem",
+              letterSpacing: "-0.02em",
+              margin: "0 0 10px",
+            }}
+          >
+            About
+          </h2>
+          <p style={{ margin: 0, color: muted, textWrap: "pretty" }}>
+            I spent years as a developer and project manager at BT before
+            moving into teaching. I use AI every day to build real tools, so
+            I’ll show you what works in practice, not just in a demo.
+          </p>
+        </section>
+
+        <Faq heading="Questions" items={QUESTIONS} accent={teal} />
 
         <StubCard stub="Free" stubNote="for community hubs" stubBackground={teal}>
           <div
@@ -121,7 +178,7 @@ export default function Ai() {
             display: "flex",
             flexWrap: "wrap",
             alignItems: "center",
-            gap: "18px 28px",
+            gap: "22px 28px",
             boxShadow: "0 10px 28px rgba(20, 16, 60, 0.18)",
           }}
         >
@@ -134,31 +191,16 @@ export default function Ai() {
               lineHeight: 1.12,
               margin: 0,
               flex: "1 1 320px",
+              minWidth: 0,
               textWrap: "balance",
             }}
           >
             Tell me what you’re trying to do and we’ll{" "}
             <span style={{ color: amber }}>start there.</span>
           </h2>
-          <a
-            href={MAILTO}
-            className="btn-amber"
-            style={{
-              display: "inline-flex",
-              alignItems: "center",
-              padding: "12px 26px",
-              borderRadius: 999,
-              background: amber,
-              color: ink,
-              fontWeight: 800,
-              textDecoration: "none",
-              marginLeft: "auto",
-              maxWidth: "100%",
-              overflowWrap: "anywhere",
-            }}
-          >
-            hello@davidhaxton.co.uk
-          </a>
+          <div style={{ flex: "0 1 auto", minWidth: 0 }}>
+            <BookCta onDark />
+          </div>
         </div>
       </Main>
       <SiteFooter />

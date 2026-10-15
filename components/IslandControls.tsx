@@ -29,16 +29,22 @@ function send(on: boolean) {
 const button: React.CSSProperties = {
   display: "inline-flex",
   alignItems: "center",
+  gap: 7,
   padding: "0 14px",
   height: 30,
   borderRadius: 999,
-  border: "1px solid rgba(255, 255, 255, 0.24)",
-  background: "rgba(28, 26, 58, 0.45)",
+  border: "1px solid rgba(255, 255, 255, 0.32)",
+  background: "rgba(28, 26, 58, 0.55)",
   color: page,
   font: "700 0.78rem/1 inherit",
   cursor: "pointer",
-  opacity: 0.75,
+  opacity: 0.9,
 };
+
+/* Without a glyph the bare word reads as stray body text rather than a
+   control. The label stays alongside it, so the affordance does not rest on
+   an icon alone. */
+const glyph: React.CSSProperties = { fontSize: "0.7rem", lineHeight: 1 };
 
 export default function IslandControls() {
   /* null until the effect reads the real preference, so the first paint does
@@ -85,7 +91,10 @@ export default function IslandControls() {
         aria-pressed={motion === true}
         aria-label={motion ? "Stop the park moving" : "Let the park move"}
       >
-        {motion ? "Pause" : "Animate"}
+        <span aria-hidden="true" style={glyph}>
+          {motion ? "❚❚" : "▶"}
+        </span>
+        {motion ? "Pause the park" : "Animate the park"}
       </button>
     </div>
   );
