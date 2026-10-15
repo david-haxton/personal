@@ -60,6 +60,22 @@ img {
   outline-offset: 3px;
 }
 
+/* Optional duotone for the portrait. The hero is flat vector on a gradient
+   and a photograph is continuous tone, so if the real picture reads as pasted
+   on, pass duotone to <Portrait> and it flattens to ink plus amber instead. */
+.portrait-duotone img {
+  filter: grayscale(1) contrast(1.12) brightness(1.04);
+}
+
+.portrait-duotone::after {
+  content: "";
+  position: absolute;
+  inset: 0;
+  background: var(--amber);
+  mix-blend-mode: color;
+  pointer-events: none;
+}
+
 /* FAQ disclosures. Native <details> already handles Enter, Space and the
    expanded state; all that is needed is to drop the default marker and point
    our own chevron down when the item opens. */

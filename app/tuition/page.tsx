@@ -5,6 +5,7 @@ import DetailCard from "@/components/DetailCard";
 import Faq from "@/components/Faq";
 import Hero from "@/components/Hero";
 import Main from "@/components/Main";
+import Portrait from "@/components/Portrait";
 import SiteFooter from "@/components/SiteFooter";
 import SiteHeader from "@/components/SiteHeader";
 import { amber, amberDeep, display, ink, muted } from "@/components/tokens";
@@ -82,25 +83,43 @@ export default function Tuition() {
       </Hero>
 
       <Main>
+        {/* The portrait that does the work. Away from the gradient and the
+            park, on a calm white card, at a size where a face actually reads
+            — this is where someone decides whether to trust me. */}
         <section style={card}>
-          <h2 style={h2}>About</h2>
-          <p style={{ margin: "0 0 14px", color: muted, textWrap: "pretty" }}>
-            I’m Head of Computer Science at an independent school in London, and
-            I’ve taught GCSE and A-Level for over fifteen years. I have a BSc in
-            Computer Science and a PGCE. Before teaching, I was a developer and
-            project manager at BT, so I teach this subject as something people
-            actually do, not just something on the syllabus.
-          </p>
-          <p
+          <div
             style={{
-              margin: 0,
-              fontWeight: 800,
-              color: amberDeep,
-              textWrap: "pretty",
+              display: "flex",
+              flexWrap: "wrap",
+              alignItems: "flex-start",
+              gap: "20px 26px",
             }}
           >
-            Enhanced DBS checked. Parents are always welcome to sit in.
-          </p>
+            <Portrait size={200} shape="block" />
+            <div style={{ flex: "1 1 320px", minWidth: 0 }}>
+              <h2 style={h2}>About</h2>
+              <p
+                style={{ margin: "0 0 14px", color: muted, textWrap: "pretty" }}
+              >
+                I’m Head of Computer Science at an independent school in London,
+                and I’ve taught GCSE and A-Level for over fifteen years. I have
+                a BSc in Computer Science and a PGCE. Before teaching, I was a
+                developer and project manager at BT, so I teach this subject as
+                something people actually do, not just something on the
+                syllabus.
+              </p>
+              <p
+                style={{
+                  margin: 0,
+                  fontWeight: 800,
+                  color: amberDeep,
+                  textWrap: "pretty",
+                }}
+              >
+                Enhanced DBS checked. Parents are always welcome to sit in.
+              </p>
+            </div>
+          </div>
         </section>
 
         <CardGrid>
@@ -123,8 +142,8 @@ export default function Tuition() {
           <p style={{ margin: 0, color: muted, textWrap: "pretty" }}>
             The gap between a grade 7 and a grade 9 is very often exam
             technique, not subject knowledge. Reading the command word,
-            structuring a longer answer, managing time under pressure:
-            that’s specifically what I work on, alongside the content itself.
+            structuring a longer answer, managing time under pressure: that’s
+            specifically what I work on, alongside the content itself.
           </p>
         </section>
 
