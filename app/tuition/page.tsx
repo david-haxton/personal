@@ -44,7 +44,7 @@ const QUESTIONS = [
   },
   {
     q: "What is enrichment?",
-    a: "Computer science beyond the exam: how AI actually works, algorithms in art and nature, and building real things. It suits students who are ahead, bored, or thinking about computer science at university. It’s charged at the same rate as tuition.",
+    a: "Computer science beyond the exam: how AI actually works, algorithms in art and nature, and building real things. It suits students who are ahead, bored, or thinking about computer science at university. It’s £75 an hour, the same as tuition.",
   },
   {
     q: "Can I sit in?",
