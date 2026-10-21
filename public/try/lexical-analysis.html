@@ -472,9 +472,9 @@ footer p{margin-bottom:.9rem}
   <div class="wrap">
     <div class="sec-head">
       <h2>What goes in, what comes out</h2>
-      <p>Lexical analysis is worth teaching as a contract rather than as a description. The stage promises very little, and most of the marks come from knowing exactly how little that is.</p>
+      <p>Hold lexical analysis in your head as a contract rather than as a description. The stage promises very little, and most of the marks come from knowing exactly how little that is.</p>
     </div>
-    <blockquote class="quote">Stages of compilation (lexical analysis, syntax analysis, code generation and optimisation).<span>OCR H446 specification, 1.2.2 (e). The specification names the stage and stops. Everything else on this page is commentary.</span></blockquote>
+    <blockquote class="quote">Stages of compilation (lexical analysis, syntax analysis, code generation and optimisation).<span>OCR H446 specification, 1.2.2 (e). The specification names the stage and stops. Everything else on this page is here to make that sentence mean something.</span></blockquote>
     <div class="contract">
       <div style="--k:var(--orchid)">
         <h4>In</h4>
@@ -509,7 +509,7 @@ footer p{margin-bottom:.9rem}
   <div class="wrap">
     <div class="sec-head">
       <h2>Where the editor stops and the translator starts</h2>
-      <p>An IDE performs lexical analysis constantly. That is what the colours are. Pupils reasonably conclude that the editor is doing stage one on the compiler's behalf and passing the result along. It is not. Step along the axis below and watch what actually crosses the boundary.</p>
+      <p>An IDE performs lexical analysis constantly. That is what the colours are. It is reasonable to conclude that the editor is doing stage one on the compiler's behalf and passing the result along. It is not. Step along the axis below and watch what actually crosses the boundary.</p>
     </div>
     <div class="tl-rail" role="tablist" aria-label="From keystroke to object code" id="tlRail"></div>
     <div class="panel" id="tlPanel">
@@ -600,7 +600,7 @@ footer p{margin-bottom:.9rem}
   <div class="wrap">
     <div class="sec-head">
       <h2>What is passed on to syntax analysis</h2>
-      <p>Nothing appears below until Build is pressed. This is the output of the translator's lexer at the last build, not the output of the editor. If the text has been changed since, the panels say so, because that is exactly the state a pupil is in when the error they are reading no longer matches the code on screen.</p>
+      <p>Nothing appears below until Build is pressed. This is the output of the translator's lexer at the last build, not the output of the editor. If the text has been changed since, the panels say so, because that is exactly the state you are in when the error you are reading no longer matches the code on screen.</p>
     </div>
     <div class="note hidden" id="handStale" style="max-width:none;margin-bottom:1.4rem;border-color:var(--amber)">
       <b>Out of date</b>
@@ -632,7 +632,7 @@ footer p{margin-bottom:.9rem}
   <div class="wrap">
     <div class="sec-head">
       <h2>When the lexer finds something it cannot read</h2>
-      <p>There are only two ways to fail at this stage: a character that belongs to no token, and a token that opens and never closes. Everything else a pupil calls a syntax error is caught later. The program below contains three lexical faults, and the choice of what to do about them is a design decision rather than a rule.</p>
+      <p>There are only two ways to fail at this stage: a character that belongs to no token, and a token that opens and never closes. Everything else you would call a syntax error is caught later. The program below contains three lexical faults, and the choice of what to do about them is a design decision rather than a rule.</p>
     </div>
     <div class="surface" id="errSource" style="margin-bottom:1.3rem"></div>
     <div class="modes" role="group" aria-label="Error reporting behaviour">
@@ -2225,7 +2225,7 @@ if (typeof module !== 'undefined' && module.exports) {
     var t = $('glossTable');
     var head = el('tr');
     head.appendChild(el('th', null, 'term'));
-    head.appendChild(el('th', null, 'what a pupil should be able to say'));
+    head.appendChild(el('th', null, 'what you should be able to say'));
     t.appendChild(head);
     GLOSSARY.forEach(function (row) {
       var tr = el('tr');
