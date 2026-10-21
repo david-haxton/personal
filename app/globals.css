@@ -55,6 +55,29 @@ img {
   color: var(--ink);
 }
 
+/* Home page doors. The title link's ::after covers the whole card, so the
+   card still clicks through anywhere; the focus ring and the button's hover
+   go on the card rather than on the title text. */
+.door-link::after {
+  content: "";
+  position: absolute;
+  inset: 0;
+}
+
+.door-link:focus-visible {
+  outline: none;
+}
+
+.door:has(.door-link:focus-visible) {
+  outline: 3px solid var(--amber);
+  outline-offset: 3px;
+}
+
+.door:has(.door-link:hover) .btn-amber {
+  background: var(--amber-hover);
+  color: var(--ink);
+}
+
 :focus-visible {
   outline: 3px solid var(--amber);
   outline-offset: 3px;

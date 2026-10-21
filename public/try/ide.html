@@ -1,0 +1,912 @@
+<!DOCTYPE html>
+<html lang="en-GB">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<meta name="description" content="An interactive GCSE computer science lesson on the IDE (OCR J277 2.5.2), by David Haxton.">
+<title>2.5.2 The IDE</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Bricolage+Grotesque:opsz,wght@12..96,400;12..96,600;12..96,800&family=Spline+Sans+Mono:wght@400;600&display=swap" rel="stylesheet">
+<style>
+:root{
+  --desk:#DCE2F3; --ink:#191C3A; --paper:#FFFFFF; --muted:#555B80; --line:#B9C1DE;
+  --ed:#F07A1A; --tr:#7A4DE8; --dg:#E23B4E; --rt:#13A36B; --db:#F5C518;
+  --font:"Bricolage Grotesque", "Segoe UI", system-ui, -apple-system, sans-serif;
+  --mono:"Spline Sans Mono", ui-monospace, Menlo, Consolas, monospace;
+  box-sizing:border-box;
+  padding-top:env(safe-area-inset-top,0px); padding-bottom:env(safe-area-inset-bottom,0px);
+}
+*,*::before,*::after{box-sizing:inherit}
+html{scroll-padding-top:env(safe-area-inset-top,0px)}
+body{margin:0;background:var(--desk);color:var(--ink);font:400 17px/1.5 var(--font);
+  background-image:radial-gradient(circle at 1px 1px, rgba(25,28,58,.13) 1px, transparent 0);background-size:22px 22px}
+button{font:inherit;color:inherit}
+:focus-visible{outline:3px solid var(--tr);outline-offset:3px}
+
+/* The raw opening: nothing switched on, not even this page */
+.rawWrap{position:fixed;inset:0;z-index:60;background:#fff;color:#000;overflow:auto;
+  font:16px/normal "Times New Roman", Times, serif}
+#raw, #raw *{all:revert}
+#raw{display:block;margin:8px}
+.rawWrap.gone{display:none}
+.boot{position:fixed;inset:0;z-index:70;pointer-events:none;display:grid;grid-template-rows:repeat(4,1fr)}
+.boot i{display:block;transform:translateX(-101%);animation:bar 900ms cubic-bezier(.7,0,.2,1) forwards}
+.boot i:nth-child(1){background:var(--ed)}
+.boot i:nth-child(2){background:var(--tr);animation-delay:70ms}
+.boot i:nth-child(3){background:var(--dg);animation-delay:140ms}
+.boot i:nth-child(4){background:var(--rt);animation-delay:210ms}
+@keyframes bar{0%{transform:translateX(-101%)}45%,55%{transform:translateX(0)}100%{transform:translateX(101%)}}
+
+/* Layout */
+.app{max-width:1260px;margin:0 auto;padding:18px 16px 0;display:grid;gap:18px;grid-template-columns:minmax(0,1fr)}
+.top{display:flex;align-items:flex-end;justify-content:space-between;gap:12px;flex-wrap:wrap}
+.top h1{margin:0;font-weight:800;font-size:clamp(2rem,6vw,3.6rem);line-height:.95;letter-spacing:-.03em}
+.top h1 small{display:block;font-size:.34em;font-weight:600;letter-spacing:0;color:var(--muted);margin-bottom:.35em}
+.soundBtn{border:2px solid var(--ink);background:var(--paper);border-radius:999px;padding:6px 14px;font-weight:600;font-size:.9rem;cursor:pointer}
+.soundBtn[aria-pressed="true"]{background:var(--ink);color:var(--paper)}
+.left{display:grid;gap:18px;min-width:0;grid-template-columns:minmax(0,1fr)}
+
+/* Facility rail */
+.rail{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:10px}
+@media(min-width:720px){.rail{grid-template-columns:repeat(4,minmax(0,1fr))}}
+.sw{--c:var(--ink);position:relative;text-align:left;cursor:pointer;background:var(--paper);border:2px solid var(--ink);
+  border-radius:16px;padding:10px 12px 11px;box-shadow:3px 3px 0 var(--ink);display:grid;grid-template-columns:1fr auto;
+  column-gap:8px;align-items:start;transition:background .25s,color .25s,transform .08s,box-shadow .08s;min-height:74px}
+.sw:active{transform:translate(2px,2px);box-shadow:1px 1px 0 var(--ink)}
+.sw .nm{font-weight:800;font-size:1.02rem;line-height:1.1}
+.sw .sub{grid-column:1/2;font-size:.8rem;line-height:1.25;color:var(--muted);margin-top:3px}
+.sw .trk{grid-row:1/3;grid-column:2;width:40px;height:24px;border-radius:999px;border:2px solid var(--ink);background:var(--desk);position:relative;margin-top:2px}
+.sw .trk::after{content:"";position:absolute;top:2px;left:2px;width:16px;height:16px;border-radius:50%;background:var(--ink);transition:transform .25s cubic-bezier(.5,1.6,.5,1)}
+.sw[aria-checked="true"]{background:var(--c);color:#fff}
+.sw[aria-checked="true"] .sub{color:rgba(255,255,255,.88)}
+.sw[aria-checked="true"] .trk{background:#fff}
+.sw[aria-checked="true"] .trk::after{transform:translateX(16px);background:var(--c)}
+.sw[data-f="editor"]{--c:var(--ed)} .sw[data-f="translator"]{--c:var(--tr)}
+.sw[data-f="diag"]{--c:var(--dg)} .sw[data-f="runtime"]{--c:var(--rt)}
+.sw[data-f="debug"]{--c:var(--db)}
+.sw[data-f="debug"][aria-checked="true"]{color:var(--ink)}
+.sw[data-f="debug"][aria-checked="true"] .sub{color:var(--ink)}
+.sw.locked{opacity:.42;cursor:not-allowed}
+.sw.want{animation:want 1.4s ease-in-out infinite}
+@keyframes want{0%,100%{box-shadow:3px 3px 0 var(--ink),0 0 0 0 var(--c)}50%{box-shadow:3px 3px 0 var(--ink),0 0 0 7px color-mix(in srgb,var(--c) 45%,transparent)}}
+.shake{animation:shake .35s}
+@keyframes shake{25%{transform:translateX(-5px)}75%{transform:translateX(5px)}}
+/* The tray hangs beneath diagnostics and run-time: the layout says what the relationship is */
+.tray{grid-column:1/3;position:relative;margin-top:8px;padding:14px 12px 12px;border:2px dashed var(--ink);border-radius:16px;
+  display:grid;grid-template-columns:minmax(0,1fr);gap:8px}
+@media(min-width:720px){.tray{grid-column:3/5}}
+.tray::before,.tray::after{content:"";position:absolute;top:-12px;width:2px;height:12px;background:var(--ink)}
+.tray::before{left:25%} .tray::after{right:25%}
+.tray .cap{font-size:.82rem;line-height:1.3;color:var(--muted)}
+.tray .sw{min-height:0}
+
+@media(max-width:999px){html{scroll-padding-bottom:44vh}}
+@media(max-width:719px){
+  .sw{min-height:0;padding:9px 10px;box-shadow:2px 2px 0 var(--ink);align-items:center}
+  .sw .sub{display:none}
+  .sw .nm{font-size:.92rem}
+  .sw .trk{grid-row:1;width:34px;height:20px}
+  .sw .trk::after{width:12px;height:12px}
+  .sw[aria-checked="true"] .trk::after{transform:translateX(14px)}
+  .tray{padding:10px 10px 10px;gap:6px}
+  .tray .cap{font-size:.74rem}
+  .top h1{font-size:2.2rem}
+  .guide{max-height:42vh}
+}
+/* Windows */
+.wins{display:grid;gap:16px;grid-template-columns:minmax(0,1fr)}
+@media(min-width:1100px){.wins.three{grid-template-columns:minmax(0,1fr) minmax(0,1fr);align-items:start} .wins.three #edWin{grid-row:span 2}}
+.win{background:var(--paper);border:2px solid var(--ink);border-radius:14px;box-shadow:5px 5px 0 var(--ink);overflow:hidden;position:relative;min-width:0}
+.win[hidden]{display:none}
+.win.enter{animation:pop .45s cubic-bezier(.3,1.5,.5,1)}
+@keyframes pop{from{transform:scale(.94) translateY(10px);opacity:0}to{transform:none;opacity:1}}
+.bar{display:flex;align-items:center;gap:10px;padding:8px 10px 8px 14px;border-bottom:2px solid var(--ink);background:#E9ECF5;transition:background .3s,color .3s;min-height:48px}
+.bar .tt{font-weight:800;flex:1;min-width:0;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.bar .tt span{font-weight:400;font-size:.85rem;opacity:.85;margin-left:6px}
+#edWin.lit .bar{background:var(--ed);color:#fff}
+#shWin .bar{background:var(--rt);color:#fff}
+#dbWin .bar{background:var(--db)}
+.btn{border:2px solid var(--ink);background:var(--paper);color:var(--ink);border-radius:10px;padding:5px 13px;font-weight:800;cursor:pointer;box-shadow:2px 2px 0 var(--ink);white-space:nowrap}
+.btn:active{transform:translate(1px,1px);box-shadow:1px 1px 0 var(--ink)}
+.btn:disabled{opacity:.4;cursor:not-allowed}
+.btn.go{background:var(--ink);color:var(--paper)}
+
+.code{font:400 15px/1.75 var(--mono);padding:12px 0;overflow-x:auto;background:#fff;color:#000;transition:background .3s}
+@media(min-width:720px){.code{font-size:16px}}
+.ln{display:flex;min-width:max-content;position:relative;transition:background .15s}
+.gut{width:3.2em;flex:none;text-align:right;padding:0 .9em 0 0;margin-right:.9em;border:0;border-right:1px solid #DADDEA;background:none;
+  color:#8A8FAD;font:inherit;cursor:default;position:relative}
+.src{white-space:pre;padding-right:16px}
+.t-kw{color:#FF7700} .t-bi{color:#900090} .t-str{color:#00AA00}
+.plain .code{background:#F3F3F1;color:#77776F}
+.plain .gut{display:none}
+.plain .src{padding-left:14px}
+.plain .t-kw,.plain .t-bi,.plain .t-str{color:inherit}
+.ln.scan{background:color-mix(in srgb,var(--tr) 22%,transparent)}
+.ln.cur{background:#E8E1FF}
+.ln.cur .gut::before{content:"\25B6";position:absolute;left:.25em;color:var(--tr);font-size:.75em}
+.ln.bp .gut{background:var(--db);color:var(--ink);font-weight:600}
+.ln.bp{background:#FFF6CC}
+.dbg .gut{cursor:pointer}
+.dbg .gut:hover{color:var(--ink)}
+.ln.errline{background:#FDE7EA}
+.errMark{background:#FF6B6B;border-radius:2px}
+mark.hit{background:#FFD8B0;color:inherit;border-radius:3px;box-shadow:0 0 0 2px #FFD8B0}
+.ghost{color:#9AA0BE}
+.ac{position:absolute;left:calc(3.2em + 1.8em + 3ch);top:1.7em;z-index:3;background:#fff;border:2px solid var(--ink);border-radius:8px;box-shadow:3px 3px 0 var(--ink);font-size:.9em;overflow:hidden}
+.ac div{padding:1px 12px}
+.ac .sel{background:var(--ed);color:#fff}
+.find{display:flex;gap:10px;align-items:center;padding:7px 14px;border-bottom:2px solid var(--ink);background:#FFF1E4;font-size:.9rem}
+.find[hidden]{display:none}
+.find code{font-family:var(--mono);background:#fff;border:1px solid var(--line);padding:1px 6px;border-radius:5px}
+.strip{border-top:2px solid var(--ink);padding:8px 14px;font-size:.92rem;min-height:40px;background:#F6F7FB;display:flex;align-items:center;gap:8px}
+.strip.err{background:#FDE7EA}
+.strip.ok{background:#E3F6EE}
+.strip.vague{background:#EEE;color:#555;font-family:var(--mono)}
+.dlg{position:relative;margin:4px 14px 14px;max-width:420px;z-index:5;background:#fff;border:2px solid var(--ink);border-radius:12px;box-shadow:6px 6px 0 var(--ink);overflow:hidden}
+.dlg[hidden]{display:none}
+.dlg .dh{background:var(--dg);color:#fff;font-weight:800;padding:7px 12px}
+.dlg .db{padding:12px 14px;display:grid;gap:10px}
+.dlg .db p{margin:0}
+.dlg .db code{font-family:var(--mono)}
+.dlg .row{display:flex;gap:8px;flex-wrap:wrap}
+
+.shell{font:400 14px/1.6 var(--mono);padding:10px 14px;min-height:120px;max-height:260px;overflow:auto;background:#fff;white-space:pre;color:#000}
+.shell .con{color:#770000}
+.shell .out{color:#0000CC}
+.shell .er{color:#CC0000}
+.shell .pr{color:#770000}
+
+.dbctl{display:flex;gap:6px}
+.watch{width:100%;border-collapse:collapse;font:400 14px/1.4 var(--mono)}
+.watch td{padding:6px 14px;border-bottom:1px solid #ECEEF6;vertical-align:top}
+.watch td:first-child{width:40%;color:var(--muted)}
+.watch tr.chg td:last-child{animation:chg 1s}
+@keyframes chg{from{background:var(--db)}to{background:transparent}}
+.wnote{font-size:.8rem;color:var(--muted);padding:8px 14px 10px;margin:0}
+.wempty{padding:14px;color:var(--muted);margin:0;font-size:.92rem}
+
+/* Guide */
+.guide{background:var(--ink);color:#F1F2FA;border-radius:20px;padding:18px 18px 20px;position:sticky;bottom:0;z-index:20;
+  max-height:48vh;overflow:auto;margin:0 -16px;border-radius:20px 20px 0 0;box-shadow:0 -8px 30px rgba(25,28,58,.25);
+  padding-bottom:calc(20px + env(safe-area-inset-bottom,0px))}
+@media(min-width:1000px){
+  .app{grid-template-columns:minmax(0,1fr) 380px;align-items:start;padding-bottom:24px}
+  .top{grid-column:1/3}
+  .guide{position:sticky;top:18px;bottom:auto;max-height:calc(100vh - 36px);margin:0;border-radius:20px;box-shadow:6px 6px 0 rgba(25,28,58,.35)}
+}
+.prog{display:flex;gap:5px;margin-bottom:14px}
+.prog i{flex:1;height:5px;border-radius:9px;background:rgba(255,255,255,.18)}
+.prog i.d{background:#fff}
+.prog i.n{background:linear-gradient(90deg,var(--ed),var(--tr),var(--dg),var(--rt))}
+.guide h2{margin:0 0 10px;font-weight:800;font-size:1.65rem;line-height:1.05;letter-spacing:-.02em}
+.guide p{margin:0 0 11px;max-width:62ch}
+.guide code{font-family:var(--mono);font-size:.9em;background:rgba(255,255,255,.12);padding:1px 6px;border-radius:5px}
+.todo{display:flex;gap:10px;align-items:center;background:rgba(255,255,255,.1);border-left:4px solid var(--db);padding:9px 12px;border-radius:0 10px 10px 0;margin:4px 0 12px;font-weight:600}
+.todo::before{content:"";width:9px;height:9px;border-radius:50%;background:var(--db);flex:none;animation:blink 1.2s infinite}
+@keyframes blink{50%{opacity:.25}}
+.say{background:rgba(255,255,255,.08);border-radius:12px;padding:10px 12px;margin:0 0 12px}
+.gbtns{display:flex;gap:8px;flex-wrap:wrap;margin-top:6px}
+.gbtn{border:2px solid #fff;background:transparent;color:#fff;border-radius:12px;padding:8px 15px;font-weight:800;cursor:pointer}
+.gbtn.pri{background:#fff;color:var(--ink)}
+.gbtn code{background:transparent;padding:0}
+.chips{display:flex;flex-wrap:wrap;gap:8px;margin:4px 0 12px}
+.chip{border:2px solid var(--ed);background:transparent;color:#fff;border-radius:999px;padding:6px 13px;font-weight:600;cursor:pointer}
+.chip.done{background:var(--ed)}
+.pad{font:400 14px/1.7 var(--mono);background:#fff;color:#000;border-radius:10px;padding:8px 12px;margin:0 0 12px;white-space:pre;min-height:3.6em}
+.pad .cur{display:inline-block;width:2px;height:1.1em;background:#000;vertical-align:-.15em;animation:blink 1s infinite}
+.tbl{width:100%;border-collapse:collapse;font-size:.88rem;margin:4px 0 14px}
+.tbl th,.tbl td{text-align:left;padding:7px 8px;border-bottom:1px solid rgba(255,255,255,.18);vertical-align:top}
+.tbl th{font-weight:800}
+.four{display:grid;grid-template-columns:1fr 1fr;gap:6px;margin:4px 0 12px}
+.four span{border-radius:10px;padding:7px 10px;font-weight:800;font-size:.92rem}
+.sand{display:grid;gap:10px;margin:6px 0 14px}
+.sand label{display:flex;justify-content:space-between;align-items:center;gap:10px;font-size:.92rem}
+.seg{display:flex;border:2px solid #fff;border-radius:10px;overflow:hidden}
+.seg button{border:0;background:transparent;color:#fff;padding:5px 10px;font:600 .85rem var(--mono);cursor:pointer}
+.seg button[aria-pressed="true"]{background:#fff;color:var(--ink)}
+.idle{background:#fff;color:var(--ink);border-radius:14px;padding:14px 16px;margin-top:10px}
+.idle h3{margin:0 0 8px;font-size:1.15rem}
+.idle ol{margin:0;padding-left:1.2em;font-size:.9rem}
+.idle li{margin-bottom:7px}
+.foot{grid-column:1/-1;font-size:.82rem;color:var(--muted);padding:6px 0 20px}
+.sr{position:absolute;width:1px;height:1px;overflow:hidden;clip:rect(0 0 0 0);white-space:nowrap}
+@media (prefers-reduced-motion: reduce){*,*::before,*::after{animation:none!important;transition:none!important}}
+</style>
+<style>/* Back link to the main site, added for davidhaxton.co.uk */
+#dh-back{position:fixed;top:calc(8px + env(safe-area-inset-top, 0px));left:8px;z-index:1000;display:inline-block;background:#fff;color:#1C1A3A;border:2px solid #1C1A3A;border-radius:999px;padding:3px 10px;font:700 12px/1.3 system-ui,-apple-system,"Segoe UI",sans-serif;text-decoration:none;white-space:nowrap;box-shadow:0 2px 6px rgba(0,0,0,.18)}
+#dh-back:hover{background:#1C1A3A;color:#fff}
+#dh-back:focus-visible{outline:3px solid #FFB320;outline-offset:2px}
+/* Push the opening screen and the lesson heading down below the back link. */
+.rawWrap{padding-top:36px}
+.app{padding-top:50px}
+</style>
+</head>
+<body>
+<!-- Back to the main site. Fixed, above everything including any opening overlay. -->
+<a id="dh-back" href="/tuition">← davidhaxton.co.uk</a>
+
+<div class="rawWrap" id="rawWrap">
+  <div id="raw">
+    <h1>2.5.2 The integrated development environment</h1>
+    <p>This page has nothing switched on. No layout, no colour, no help. Just text.</p>
+    <p>Writing code with no IDE is a lot like reading this. It works. It's just miserable.</p>
+    <p><button id="bootBtn" type="button">Switch on the IDE</button></p>
+    <hr>
+    <p><small>David Haxton &middot; davidhaxton.co.uk</small></p>
+  </div>
+</div>
+
+<div class="app" id="app" aria-hidden="true">
+  <header class="top">
+    <h1><small>OCR J277 2.5.2</small>The IDE</h1>
+    <button class="soundBtn" id="soundBtn" type="button" aria-pressed="false">Sound off</button>
+  </header>
+
+  <div class="left">
+    <div class="rail" id="rail" aria-label="IDE facilities">
+      <button class="sw" data-f="editor" role="switch" aria-checked="false" type="button"><span class="nm">Editor</span><span class="trk"></span><span class="sub">Write and edit your code</span></button>
+      <button class="sw" data-f="translator" role="switch" aria-checked="false" type="button"><span class="nm">Translator</span><span class="trk"></span><span class="sub">Turn it into machine code</span></button>
+      <button class="sw" data-f="diag" role="switch" aria-checked="false" type="button"><span class="nm">Error diagnostics</span><span class="trk"></span><span class="sub">Say what went wrong, and where</span></button>
+      <button class="sw" data-f="runtime" role="switch" aria-checked="false" type="button"><span class="nm">Run-time environment</span><span class="trk"></span><span class="sub">Run it and see what happens</span></button>
+      <div class="tray">
+        <span class="cap">Underneath diagnostics and the run-time environment. Not a fifth facility.</span>
+        <button class="sw" data-f="debug" role="switch" aria-checked="false" type="button"><span class="nm">Debugging tools</span><span class="trk"></span><span class="sub">Breakpoints, stepping, watching variables</span></button>
+      </div>
+    </div>
+
+    <div class="wins" id="wins">
+      <section class="win plain" id="edWin" aria-label="Editor window">
+        <div class="bar"><div class="tt" id="edTitle">basket.py</div><button class="btn go" id="runBtn" type="button">Run</button></div>
+        <div class="find" id="findBar" hidden>Find <code>subTotal</code> <span>4 matches</span></div>
+        <div class="code" id="code"></div>
+        <div class="dlg" id="synDlg" role="alertdialog" aria-labelledby="dlgT" hidden>
+          <div class="dh" id="dlgT">SyntaxError</div>
+          <div class="db"><p><code>expected ':'</code></p><p>Line 3. The red block shows where.</p>
+            <div class="row"><button class="btn go" id="fixColon" type="button">Add the colon</button><button class="btn" id="dlgOk" type="button">OK</button></div></div>
+        </div>
+        <div class="strip" id="strip" aria-live="polite"></div>
+      </section>
+
+      <section class="win" id="shWin" aria-label="Shell window" hidden>
+        <div class="bar"><div class="tt">Shell <span>output and run-time errors</span></div></div>
+        <div class="shell" id="shell" aria-live="polite"></div>
+      </section>
+
+      <section class="win" id="dbWin" aria-label="Debugger window" hidden>
+        <div class="bar"><div class="tt">Debugger</div>
+          <div class="dbctl"><button class="btn" id="goBtn" type="button">Go</button><button class="btn" id="stepBtn" type="button">Step</button><button class="btn" id="quitBtn" type="button">Quit</button></div></div>
+        <div id="watch"></div>
+        <p class="wnote">Watch. In IDLE, the same values appear in the Locals panel.</p>
+      </section>
+    </div>
+  </div>
+
+  <aside class="guide" id="guide" aria-live="polite">
+    <div class="prog" id="prog"></div>
+    <h2 id="gTitle"></h2>
+    <div id="gBody"></div>
+  </aside>
+
+  <p class="foot">David Haxton &middot; davidhaxton.co.uk. A teaching model of an IDE: the code here runs on a tiny interpreter built into this page, which only understands what basket.py needs. © David Haxton 2026. All rights reserved. Not for reuse in schools or tuition without permission.</p>
+</div>
+
+<script>
+(() => {
+'use strict';
+const $ = s => document.querySelector(s);
+const reduce = matchMedia('(prefers-reduced-motion: reduce)').matches;
+const esc = s => String(s).replace(/[&<>"]/g, c => ({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;'}[c]));
+const wait = ms => new Promise(r => setTimeout(r, reduce ? 0 : ms));
+
+/* ---------- state ---------- */
+const S = {
+  step: 1, phase: 0, chips: new Set(),
+  fac: {editor:false, translator:false, diag:false, runtime:false, debug:false},
+  prog: {colon:false, div:'4', basket:'full'},
+  bps: new Set(), sound:false, busy:false, sandbox:false, note:''
+};
+const STEPS = 8;
+
+function srcLines(){
+  const p = S.prog;
+  return [
+    'subTotal = 0',
+    'prices = ' + (p.basket === 'full' ? '[4.50, 2.25, 9.75]' : '[]'),
+    'for price in prices' + (p.colon ? ':' : ''),
+    '    subTotal = subTotal + price',
+    'averagePrice = subTotal / ' + p.div,
+    'print("Average:", averagePrice)'
+  ];
+}
+
+/* ---------- sound (muted by default) ---------- */
+let ac = null;
+function tone(f, d, type='square', t0=0, vol=.05){
+  const o = ac.createOscillator(), g = ac.createGain();
+  o.type = type; o.frequency.value = f;
+  g.gain.setValueAtTime(vol, ac.currentTime + t0);
+  g.gain.exponentialRampToValueAtTime(.0001, ac.currentTime + t0 + d);
+  o.connect(g).connect(ac.destination); o.start(ac.currentTime + t0); o.stop(ac.currentTime + t0 + d + .02);
+}
+function sfx(k){
+  if (!S.sound) return;
+  try {
+    ac = ac || new (window.AudioContext || window.webkitAudioContext)();
+    if (k === 'on') { tone(520,.07); tone(780,.09,'square',.06); }
+    else if (k === 'off') { tone(400,.08); tone(260,.1,'square',.06); }
+    else if (k === 'err') { tone(130,.3,'sawtooth',0,.06); }
+    else if (k === 'ok') { [523,659,784,1047].forEach((f,i)=>tone(f,.12,'triangle',i*.07,.06)); }
+    else if (k === 'tick') { tone(1200,.02,'square',0,.025); }
+    else if (k === 'no') { tone(200,.06); tone(180,.08,'square',.07); }
+  } catch(e) {}
+}
+
+/* ---------- colouring (IDLE Classic colours) ---------- */
+const KW = new Set(['for','in','if','else','elif','while','def','return','and','or','not']);
+const BI = new Set(['print','len']);
+function colour(line, find){
+  return line.replace(/("[^"]*")|\b([A-Za-z_]\w*)\b|([&<>])/g, (m, s, w, c) => {
+    if (s) return '<span class="t-str">' + esc(s) + '</span>';
+    if (w) {
+      let out = KW.has(w) ? '<span class="t-kw">'+w+'</span>' : BI.has(w) ? '<span class="t-bi">'+w+'</span>' : w;
+      if (find && w === find) out = '<mark class="hit">' + out + '</mark>';
+      return out;
+    }
+    return esc(c);
+  });
+}
+
+/* ---------- a tiny interpreter for the subset basket.py uses ---------- */
+class SynErr { constructor(line, col, msg){ this.line=line; this.col=col; this.msg=msg; } }
+class RunErr { constructor(kind, msg, node){ this.kind=kind; this.msg=msg; this.node=node; } }
+const I = v => ({t:'int', v}), F = v => ({t:'float', v}), Str = v => ({t:'str', v}), L = v => ({t:'list', v});
+function pyFloat(v){ return Number.isInteger(v) ? v.toFixed(1) : String(v); }
+function repr(x){
+  if (x.t === 'int') return String(x.v);
+  if (x.t === 'float') return pyFloat(x.v);
+  if (x.t === 'str') return "'" + x.v + "'";
+  if (x.t === 'list') return '[' + x.v.map(repr).join(', ') + ']';
+  return 'None';
+}
+const pyStr = x => x.t === 'str' ? x.v : repr(x);
+
+function tokenize(s, n){
+  const out = [], re = /\s*(?:(\d+\.\d*|\d+)|("[^"]*")|([A-Za-z_]\w*)|(\S))/y;
+  re.lastIndex = 0;
+  while (re.lastIndex < s.length) {
+    const m = re.exec(s); if (!m) break;
+    const lex = m[1] || m[2] || m[3] || m[4]; if (!lex) break;
+    const st = re.lastIndex - lex.length, e = re.lastIndex;
+    if (m[1]) out.push({k:'num', v:m[1], s:st, e});
+    else if (m[2]) out.push({k:'str', v:m[2].slice(1,-1), s:st, e});
+    else if (m[3]) out.push({k:'name', v:m[3], s:st, e});
+    else out.push({k:'op', v:m[4], s:st, e});
+  }
+  return out;
+}
+function parseStmt(text, n){
+  const t = tokenize(text, n); let p = 0;
+  const peek = () => t[p], next = () => t[p++];
+  const isOp = v => t[p] && t[p].k === 'op' && t[p].v === v;
+  const bad = (tok) => new SynErr(n, (tok ? tok.s : text.length) + 1, 'invalid syntax');
+  function atom(){
+    const tk = next(); if (!tk) throw bad();
+    if (tk.k === 'num') return {k:'num', v:tk.v, f:tk.v.includes('.'), s:tk.s, e:tk.e};
+    if (tk.k === 'str') return {k:'str', v:tk.v, s:tk.s, e:tk.e};
+    if (tk.k === 'name') {
+      if (isOp('(')) { next(); const args = [];
+        if (!isOp(')')) { args.push(expr()); while (isOp(',')) { next(); args.push(expr()); } }
+        if (!isOp(')')) throw bad(peek()); const cl = next();
+        return {k:'call', fn:tk.v, args, s:tk.s, e:cl.e}; }
+      return {k:'name', v:tk.v, s:tk.s, e:tk.e};
+    }
+    if (tk.k === 'op' && tk.v === '[') { const items = [];
+      if (!isOp(']')) { items.push(expr()); while (isOp(',')) { next(); items.push(expr()); } }
+      if (!isOp(']')) throw bad(peek()); const cl = next();
+      return {k:'list', items, s:tk.s, e:cl.e}; }
+    if (tk.k === 'op' && tk.v === '(') { const x = expr(); if (!isOp(')')) throw bad(peek()); next(); return x; }
+    throw bad(tk);
+  }
+  function term(){ let l = atom(); while (isOp('*') || isOp('/')) { const o = next(); const r = atom(); l = {k:'bin', op:o.v, l, r, os:o.s, s:l.s, e:r.e}; } return l; }
+  function expr(){ let l = term(); while (isOp('+') || isOp('-')) { const o = next(); const r = term(); l = {k:'bin', op:o.v, l, r, os:o.s, s:l.s, e:r.e}; } return l; }
+
+  if (t[0] && t[0].k === 'name' && t[0].v === 'for') {
+    next(); const v = next(); if (!v || v.k !== 'name') throw bad(v);
+    const kin = next(); if (!kin || kin.v !== 'in') throw bad(kin);
+    const iter = expr();
+    if (!isOp(':')) throw new SynErr(n, text.length + 1, "expected ':'");
+    next(); if (p < t.length) throw bad(peek());
+    return {type:'for', line:n, var:v.v, iter, body:[]};
+  }
+  if (t[0] && t[0].k === 'name' && t[1] && t[1].k === 'op' && t[1].v === '=') {
+    p = 2; const x = expr(); if (p < t.length) throw bad(peek());
+    return {type:'assign', line:n, name:t[0].v, expr:x};
+  }
+  const x = expr(); if (p < t.length) throw bad(peek());
+  return {type:'expr', line:n, expr:x};
+}
+function compile(lines){
+  const root = [], stack = [{indent:0, body:root}];
+  lines.forEach((text, i) => {
+    const n = i + 1; if (!text.trim()) return;
+    const ind = text.match(/^ */)[0].length;
+    let top = stack[stack.length-1];
+    if (top.expect) { if (ind <= top.parent) throw new SynErr(n, ind+1, 'expected an indented block'); top.indent = ind; top.expect = false; }
+    while (ind < stack[stack.length-1].indent) stack.pop();
+    if (ind !== stack[stack.length-1].indent) throw new SynErr(n, ind+1, 'unexpected indent');
+    const st = parseStmt(text, n);
+    stack[stack.length-1].body.push(st);
+    if (st.type === 'for') stack.push({indent:Infinity, expect:true, parent:ind, body:st.body});
+  });
+  return root;
+}
+function ev(node, env){
+  switch (node.k) {
+    case 'num': return node.f ? F(parseFloat(node.v)) : I(parseInt(node.v, 10));
+    case 'str': return Str(node.v);
+    case 'list': return L(node.items.map(x => ev(x, env)));
+    case 'name':
+      if (!(node.v in env)) throw new RunErr('NameError', "name '" + node.v + "' is not defined", node);
+      return env[node.v];
+    case 'call': {
+      const a = node.args.map(x => ev(x, env));
+      if (node.fn === 'len') return I(a[0].v.length);
+      if (node.fn === 'print') { shOut(a.map(pyStr).join(' '), 'out'); return {t:'none'}; }
+      throw new RunErr('NameError', "name '" + node.fn + "' is not defined", node);
+    }
+    case 'bin': {
+      const a = ev(node.l, env), b = ev(node.r, env);
+      if (node.op === '/') {
+        if (b.v === 0) throw new RunErr('ZeroDivisionError', 'division by zero', node);
+        return F(a.v / b.v);
+      }
+      const v = node.op === '+' ? a.v + b.v : node.op === '-' ? a.v - b.v : a.v * b.v;
+      return (a.t === 'float' || b.t === 'float') ? F(v) : I(v);
+    }
+  }
+}
+function* exec(stmts, env){
+  for (const s of stmts) {
+    if (s.type === 'for') {
+      yield s.line;
+      const it = ev(s.iter, env);
+      for (const item of it.v) { env[s.var] = item; yield* exec(s.body, env); yield s.line; }
+    } else {
+      yield s.line;
+      if (s.type === 'assign') env[s.name] = ev(s.expr, env); else ev(s.expr, env);
+    }
+  }
+}
+
+/* ---------- rendering ---------- */
+let findWord = null, acDemo = false, cur = 0, errAt = null;
+function renderCode(){
+  const lines = srcLines();
+  const html = lines.map((t, i) => {
+    const n = i + 1;
+    let src = S.fac.editor ? colour(t, findWord) : esc(t);
+    if (errAt && errAt.line === n && S.fac.diag) src += '<span class="errMark"> </span>';
+    const cls = ['ln'];
+    if (S.bps.has(n)) cls.push('bp');
+    if (cur === n) cls.push('cur');
+    if (errAt && errAt.line === n && S.fac.diag) cls.push('errline');
+    return '<div class="' + cls.join(' ') + '" data-n="' + n + '"><button class="gut" type="button" tabindex="' + (S.fac.debug ? 0 : -1) + '" aria-label="Line ' + n + (S.fac.debug ? ', toggle breakpoint' : '') + '">' + n + '</button><span class="src">' + src + '</span></div>';
+  });
+  if (acDemo) html.push('<div class="ln" data-n="7"><button class="gut" type="button" tabindex="-1">7</button><span class="src">' + acDemo + '</span></div>');
+  $('#code').innerHTML = html.join('');
+  $('#edWin').classList.toggle('plain', !S.fac.editor);
+  $('#edWin').classList.toggle('lit', S.fac.editor);
+  $('#edWin').classList.toggle('dbg', S.fac.debug);
+  $('#edTitle').innerHTML = S.fac.editor ? 'basket.py <span>editor</span>' : 'basket.txt <span>plain text box</span>';
+}
+function strip(msg, tone=''){ const el = $('#strip'); el.className = 'strip ' + tone; el.innerHTML = msg || ''; }
+function shOut(text, cls){ const sh = $('#shell'); const d = document.createElement('div'); d.className = cls; d.textContent = text; sh.appendChild(d); sh.scrollTop = sh.scrollHeight; }
+function renderWatch(env, changed){
+  const w = $('#watch');
+  if (!R) { w.innerHTML = '<p class="wempty">Not running. Set a breakpoint, then press Run, or press Step to start from line 1.</p>'; return; }
+  const keys = Object.keys(env);
+  if (!keys.length) { w.innerHTML = '<p class="wempty">Paused before line ' + cur + '. No variables yet.</p>'; return; }
+  w.innerHTML = '<table class="watch"><tbody>' + keys.map(k =>
+    '<tr class="' + (changed && changed.has(k) ? 'chg' : '') + '"><td>' + esc(k) + '</td><td>' + esc(repr(env[k])) + '</td></tr>').join('') + '</tbody></table>';
+}
+function renderSwitches(){
+  document.querySelectorAll('.sw').forEach(b => {
+    const f = b.dataset.f;
+    b.setAttribute('aria-checked', S.fac[f] ? 'true' : 'false');
+    const ok = allowed(f);
+    b.classList.toggle('locked', !ok && !S.fac[f]);
+    b.classList.toggle('want', wanted() === f && !S.fac[f]);
+  });
+  $('#dbWin').classList.toggle('x', false);
+}
+function showWin(id, show){
+  const w = $(id); const was = !w.hidden; w.hidden = !show;
+  if (show && !was) { w.classList.remove('enter'); void w.offsetWidth; w.classList.add('enter'); setTimeout(()=>w.scrollIntoView({block:'nearest', behavior: reduce ? 'auto' : 'smooth'}), 60); }
+  const n = [!$('#shWin').hidden, !$('#dbWin').hidden].filter(Boolean).length;
+  $('#wins').classList.toggle('three', n === 2);
+}
+function renderAll(){ renderCode(); renderSwitches(); showWin('#shWin', S.fac.runtime); showWin('#dbWin', S.fac.debug); if (S.fac.debug) renderWatch(R ? R.env : {}); renderGuide(); syncDbg(); }
+
+/* ---------- which switch may be flipped ---------- */
+function wanted(){
+  const s = S.step, p = S.phase;
+  if (s === 1) return 'editor';
+  if (s === 3 && p >= 1) return 'translator';
+  if (s === 4) return 'diag';
+  if (s === 5 && p >= 1) return 'runtime';
+  if (s === 6) return 'debug';
+  return null;
+}
+function allowed(f){ return S.sandbox || wanted() === f; }
+
+/* ---------- running ---------- */
+let R = null;
+function stopRun(){ R = null; cur = 0; syncDbg(); }
+function syncDbg(){
+  const on = S.fac.debug;
+  $('#goBtn').disabled = !on || !R; $('#quitBtn').disabled = !on || !R; $('#stepBtn').disabled = !on || S.busy;
+  $('#runBtn').disabled = S.busy;
+}
+async function translate(){
+  const lines = srcLines();
+  let err = null, ast = null;
+  try { ast = compile(lines); } catch (e) { if (e instanceof SynErr) err = e; else throw e; }
+  const upto = err ? err.line : lines.length;
+  strip('Translating&hellip;');
+  for (let n = 1; n <= upto; n++) {
+    const el = document.querySelector('.ln[data-n="' + n + '"]');
+    if (el) el.classList.add('scan'); sfx('tick');
+    await wait(120);
+    if (el && !(err && n === upto)) el.classList.remove('scan');
+  }
+  await wait(120);
+  document.querySelectorAll('.ln.scan').forEach(x => x.classList.remove('scan'));
+  return {err, ast};
+}
+async function run(mode){ // mode: 'run' or 'step'
+  if (S.busy) return;
+  hideDlg(); errAt = null;
+  if (R) stopRun();
+  renderCode();
+  if (!S.fac.translator) {
+    strip("Nothing happened. The processor can't run text, and there's nothing here to translate it.", 'vague');
+    sfx('no'); emit('noTranslator'); return;
+  }
+  S.busy = true; syncDbg();
+  const {err, ast} = await translate();
+  S.busy = false; syncDbg();
+  if (err) {
+    sfx('err');
+    if (S.fac.diag) {
+      errAt = err; renderCode();
+      strip('SyntaxError on line ' + err.line + ': <code>' + esc(err.msg) + '</code>', 'err');
+      $('#fixColon').hidden = S.prog.colon; showDlg();
+    } else {
+      strip('Error.', 'vague');
+    }
+    emit('synErr', {diag:S.fac.diag}); return;
+  }
+  if (!S.fac.runtime) {
+    strip("Translated, no problems. But there's nowhere inside the IDE to run it or see what it does.", 'ok');
+    emit('noRuntime'); return;
+  }
+  strip('Running.', 'ok');
+  shOut('= RESTART: basket.py =', 'con');
+  R = {gen: exec(ast, {}), env: {}, count: 0};
+  R.gen = exec(ast, R.env);
+  if (S.fac.debug && mode === 'step') { advance(true); return; }
+  if (S.fac.debug) { advance(false); return; }
+  advance(false, true);
+}
+function snapshot(env){ const o = {}; for (const k in env) o[k] = repr(env[k]); return o; }
+function advance(single, ignoreBps){
+  if (!R) return;
+  const before = snapshot(R.env);
+  let first = true;
+  while (true) {
+    let r;
+    try { r = R.gen.next(); }
+    catch (e) {
+      if (e instanceof RunErr) { traceback(e, cur || 0); return; }
+      throw e;
+    }
+    if (r.done) { finish(); return; }
+    cur = r.value; R.count++;
+    if (R.count > 2000) { strip('Stopped: too many steps.', 'err'); finish(); return; }
+    if (single) break;
+    if (!ignoreBps && S.fac.debug && S.bps.has(cur)) break;
+    first = false;
+  }
+  const after = snapshot(R.env), changed = new Set(Object.keys(after).filter(k => after[k] !== before[k]));
+  renderCode(); renderWatch(R.env, changed); syncDbg();
+  strip('Paused before line ' + cur + '. Press Go to carry on, or Step to run one line.', '');
+  sfx('tick');
+  emit('paused', {line: cur, env: R.env});
+}
+function finish(){
+  shOut('>>> ', 'pr');
+  const env = R ? R.env : {};
+  const out = env.averagePrice ? pyStr(env.averagePrice) : null;
+  stopRun(); renderCode(); if (S.fac.debug) renderWatch({});
+  strip('Finished.', 'ok'); sfx('ok');
+  emit('output', {value: out});
+}
+function traceback(e, line){
+  const text = srcLines()[line - 1];
+  const strip0 = text.length - text.trimStart().length;
+  shOut('Traceback (most recent call last):', 'er');
+  shOut('  File "basket.py", line ' + line + ', in <module>', 'er');
+  shOut('    ' + text.trim(), 'er');
+  if (e.node && e.node.k === 'bin') {
+    let c = ''; for (let i = e.node.s; i < e.node.e; i++) c += (i === e.node.os ? '^' : '~');
+    shOut('    ' + ' '.repeat(e.node.s - strip0) + c, 'er');
+  }
+  shOut(e.kind + ': ' + e.msg, 'er');
+  shOut('>>> ', 'pr');
+  stopRun(); renderCode(); if (S.fac.debug) renderWatch({});
+  strip('Run-time error on line ' + line + '. Details in the Shell.', 'err'); sfx('err');
+  emit('runtimeErr', {line});
+}
+function showDlg(){ $('#synDlg').hidden = false; $('#edWin').scrollIntoView({block:'start', behavior: reduce ? 'auto' : 'smooth'}); setTimeout(()=>$('#fixColon').hidden ? $('#dlgOk').focus() : $('#fixColon').focus({preventScroll:true}), 30); }
+function hideDlg(){ $('#synDlg').hidden = true; }
+
+/* ---------- editor demos ---------- */
+let demoTimer = null;
+function clearDemos(){ clearTimeout(demoTimer); findWord = null; acDemo = false; $('#findBar').hidden = true; document.querySelectorAll('.ac').forEach(x=>x.remove()); renderCode(); }
+async function demo(k){
+  clearDemos();
+  if (k === 'find') { findWord = 'subTotal'; $('#findBar').hidden = false; renderCode(); demoTimer = setTimeout(clearDemos, 5000); }
+  if (k === 'ac') {
+    acDemo = '<span class="ghost">pri</span>'; renderCode();
+    const row = document.querySelector('.ln[data-n="7"]');
+    const box = document.createElement('div'); box.className = 'ac';
+    box.innerHTML = '<div class="sel">print</div><div>price</div><div>prices</div>';
+    row.appendChild(box); box.style.top = '1.6em'; box.style.left = 'calc(3.2em + 1.8em + 3ch)';
+    await wait(1400);
+    acDemo = '<span class="t-bi">print</span>'; box.remove(); renderCode();
+    demoTimer = setTimeout(clearDemos, 1800);
+  }
+}
+async function typePad(){
+  const pad = $('#pad'); if (!pad) return;
+  const a = 'for price in prices:';
+  for (let i = 0; i <= a.length; i++) { if (!$('#pad')) return; pad.innerHTML = colour(a.slice(0, i)) + '<span class="cur"></span>'; await wait(45); }
+  await wait(350);
+  if ($('#pad')) pad.innerHTML = colour(a) + '\n    <span class="cur"></span>';
+}
+
+/* ---------- guide ---------- */
+const P = s => '<p>' + s + '</p>';
+const TODO = s => '<div class="todo">' + s + '</div>';
+const SAY = s => '<div class="say">' + s + '</div>';
+const NEXT = (label) => '<div class="gbtns"><button class="gbtn pri" data-act="next" type="button">' + label + '</button></div>';
+const CHIPS = {
+  colour: ['Colour coding', "Keywords like <code>for</code> and <code>in</code> are orange. Built-in functions like <code>print</code> and <code>len</code> are purple. Strings are green. If a word isn't the colour you expected, you've probably mistyped it. These are IDLE's colours, so you'll see exactly this in lessons."],
+  ac: ['Auto-complete', "Start typing a name and the editor offers to finish it for you. Fewer typos, and you don't have to remember exactly what you called things. In IDLE it's Edit, then Show Completions."],
+  find: ['Find and replace', "Find shows you every place a name is used. Replace changes all of them at once, which is how you rename a variable without missing one."],
+  indent: ['Auto-indent', "End a line with a colon, press Enter, and the editor indents the next line for you. Python cares a lot about indentation, so this saves you plenty of grief."]
+};
+let chipOpen = null;
+function renderGuide(){
+  const s = S.step, p = S.phase; let t = '', b = '';
+  switch (s) {
+    case 1:
+      t = 'Just text';
+      b = P("This is basket.py. It adds up the prices in a basket and works out the average.") +
+          P("There's no IDE yet, so it's sitting in a plain text box. Two things are wrong with it. Have a look. Not easy, is it?");
+      b += p === 0 ? TODO('Switch on the editor.') :
+           SAY(P("Same code. Now there are line numbers, and the colours tell you what each word is.") + P("That's the first of the four facilities an IDE gives you.")) + NEXT('Look at the editor');
+      break;
+    case 2:
+      t = 'The editor';
+      b = P("The editor is where you enter, edit and save your code. Nearly everything it does makes code quicker to write and easier to read.");
+      b += S.chips.size < 2 ? TODO('Try at least two of these.') : '';
+      b += '<div class="chips">' + Object.keys(CHIPS).map(k => '<button class="chip' + (S.chips.has(k) ? ' done' : '') + '" data-chip="' + k + '" type="button" aria-pressed="' + (chipOpen === k) + '">' + CHIPS[k][0] + '</button>').join('') + '</div>';
+      if (chipOpen) { b += SAY(P(CHIPS[chipOpen][1])); if (chipOpen === 'indent') b += '<div class="pad" id="pad"></div>'; }
+      if (S.chips.size >= 2) b += NEXT('Next: the translator');
+      break;
+    case 3:
+      t = 'The translator';
+      if (p === 0) b = P("You've got readable code. Time to run it.") + TODO('Press Run on the editor window.');
+      if (p === 1) b = P("Nothing. Your code is just text, and the processor can't do anything with text. It only runs machine code.") + P("Something has to translate it.") + TODO('Switch on the translator.');
+      if (p === 2) b = P("The translator is on.") + TODO('Press Run again.');
+      if (p === 3) b = P("The translator turns your source code into machine code the processor can run. Python is an interpreted language, so in IDLE the translator is an interpreter.") +
+          P("It's one of the four facilities, and it's the one people forget when they list them. Don't forget it.") +
+          SAY(P("It got to line 3 and stopped. It found a problem. It just won't say what.") + P("That bare <code>Error.</code> is what you'd be stuck with if nothing reported the problem properly. Reporting it properly is the next facility.")) + NEXT('Next: error diagnostics');
+      break;
+    case 4:
+      t = 'Error diagnostics';
+      if (p === 0) b = P("Error diagnostics report what went wrong and where, so you can fix it.") + TODO('Switch on error diagnostics.');
+      if (p === 1) b = TODO('Run it again.');
+      if (p === 2) b = P("Now you know what kind of error it is, which line it's on, and roughly where on the line.") + P("This is a syntax error. The code breaks the rules of the language, so it can't be translated.") + TODO('Fix it with the button under the code.');
+      if (p === 3) b = SAY(P("Fixed. Error diagnostics turned something's wrong into line 3 needs a colon.") + P("In IDLE you get a pop-up box with the same message, and the spot goes red.")) + NEXT('Next: the run-time environment');
+      break;
+    case 5:
+      t = 'The run-time environment';
+      if (p === 0) b = TODO('Press Run.');
+      if (p === 1) b = P("It translated with no problems. So where does it run? Where does the output go?") + TODO('Switch on the run-time environment.');
+      if (p === 2) b = P("The Shell window has appeared. That's where your program's output, and any errors while it runs, will show up.") + TODO('Press Run.');
+      if (p === 3) b = P("It ran inside the IDE and showed you the output. You didn't have to leave the IDE to run it.") +
+          P("The prices are 4.50, 2.25 and 9.75. Is <code>4.125</code> the right average?") + (S.note ? SAY(P(S.note)) : '') +
+          '<div class="gbtns"><button class="gbtn" data-act="yes" type="button">Yes, that\'s right</button><button class="gbtn" data-act="no" type="button">No, it\'s wrong</button></div>';
+      if (p === 4) b = SAY(P("It's wrong. It should be 5.5.") + P("And notice that nothing complained. No pop-up, no red text. Every tool so far thinks this program is fine.")) +
+          P("That's a logic error. The program runs, but it does the wrong thing.") + NEXT('So how do you find it?');
+      break;
+    case 6:
+      t = 'Underneath: debugging tools';
+      if (p === 0) b = P("Breakpoints, stepping and watching variables are not a fifth facility. They sit underneath error diagnostics and the run-time environment. They're still worth naming in an answer.") +
+          P("They're what you reach for when a program runs and gives the wrong answer.") + TODO('Switch on the debugging tools.');
+      if (p === 1) b = P("A breakpoint pauses the program just before a line runs, so you can look at what the variables are doing.") + (S.note ? SAY(P(S.note)) : '') + TODO('Tap line number 5 to set a breakpoint. Then press Run.');
+      if (p === 2) b = P("Paused just before line 5. Look at the watch panel.") +
+          P("<code>subTotal</code> is 16.5, which is right, so the loop worked. The problem has to be on line 5.") + (S.note ? SAY(P(S.note)) : '') +
+          P("What should the <code>4</code> be?") +
+          '<div class="gbtns"><button class="gbtn" data-act="d3" type="button"><code>3</code></button><button class="gbtn" data-act="dlen" type="button"><code>len(prices)</code></button></div>';
+      if (p === 3) b = P("Line 5 now divides by however many prices there are. I've cleared your breakpoint so it runs straight through.") + TODO('Run it again.');
+      if (p === 4) b = SAY(P("5.5. Right answer.") + P("Nothing in the IDE found that bug for you. You found it by pausing the program and watching the variables.")) +
+          P("If you want to see <code>subTotal</code> grow one price at a time, press Step and keep pressing it.") + NEXT('Next: one last test');
+      break;
+    case 7:
+      t = 'A run-time error';
+      if (p === 0) b = P("What if someone checks out with nothing in the basket?") + '<div class="gbtns"><button class="gbtn pri" data-act="empty" type="button">Empty the basket</button></div>';
+      if (p === 1) b = P("Line 2 is now an empty list.") + TODO('Press Run.');
+      if (p === 2) b = SAY(P("It translated fine and started running, then crashed on line 5. <code>len(prices)</code> is now 0, and you can't divide by zero.")) +
+          P("That's a run-time error. The run-time environment caught it as the program ran, and told you which line.") +
+          P("Fixing it properly is a defensive design job, which is 2.3.1. For now, notice which tool told you.") + NEXT('Put it all together');
+      break;
+    case 8:
+      t = 'All four';
+      b = P("Four facilities. This is the list to learn.") +
+        '<div class="four"><span style="background:var(--ed)">Editors</span><span style="background:var(--dg)">Error diagnostics</span><span style="background:var(--rt)">Run-time environment</span><span style="background:var(--tr)">Translators</span></div>' +
+        P("The translator is one of the four. The debugging tools are not a fifth.") +
+        P("One short program, three kinds of error, and a different tool found each one.") +
+        '<table class="tbl"><thead><tr><th>Error</th><th>In basket.py</th><th>What found it</th></tr></thead><tbody>' +
+        '<tr><td>Syntax</td><td>Line 3, missing colon. It wouldn\'t translate.</td><td>The translator stopped. Error diagnostics said where.</td></tr>' +
+        '<tr><td>Logic</td><td>Line 5, dividing by 4. It ran and gave the wrong answer.</td><td>Nothing. You did, by pausing it and watching <code>subTotal</code>.</td></tr>' +
+        '<tr><td>Run-time</td><td>Line 5, empty basket. It crashed part-way through.</td><td>The run-time environment.</td></tr></tbody></table>' +
+        P("Everything's unlocked now. Switch facilities off and see what breaks. Then break the code.") +
+        '<div class="sand">' +
+          '<label>Line 3 ends with a colon<span class="seg"><button data-sb="colon" data-v="1" aria-pressed="' + S.prog.colon + '" type="button">yes</button><button data-sb="colon" data-v="0" aria-pressed="' + !S.prog.colon + '" type="button">no</button></span></label>' +
+          '<label>Line 5 divides by<span class="seg">' + ['4','3','len(prices)'].map(v => '<button data-sb="div" data-v="' + v + '" aria-pressed="' + (S.prog.div === v) + '" type="button">' + v + '</button>').join('') + '</span></label>' +
+          '<label>The basket is<span class="seg"><button data-sb="basket" data-v="full" aria-pressed="' + (S.prog.basket === 'full') + '" type="button">full</button><button data-sb="basket" data-v="empty" aria-pressed="' + (S.prog.basket === 'empty') + '" type="button">empty</button></span></label>' +
+        '</div>' +
+        '<div class="gbtns"><button class="gbtn" data-act="restart" type="button">Start again from the beginning</button></div>' +
+        '<div class="idle"><h3>Now do it for real in IDLE</h3><ol>' +
+          '<li>Editor: File, New File, then File, Save. Colour coding and auto-indent are already on. Edit has Show Completions, Find and Replace.</li>' +
+          '<li>Translator and run-time environment: Run, Run Module. The output appears in the Shell window.</li>' +
+          '<li>Error diagnostics: Run, Check Module checks for syntax errors without running anything. Syntax errors give you a pop-up and a red highlight. Run-time errors appear in red in the Shell.</li>' +
+          '<li>Debugging tools: in the Shell window, Debug, Debugger. Right-click a line in your file and choose Set Breakpoint. Run the module and use Go and Step. Your variables appear under Locals. IDLE pauses on line 1 first, so press Go to jump to your breakpoint.</li>' +
+        '</ol></div>' +
+        '<div class="idle"><h3>Like that?</h3><p>This is one of the interactive lessons I use with students. Tuition clients get the full set.</p><p><a href="mailto:hello@davidhaxton.co.uk?subject=Free%2015-minute%20call">Book a free 15-minute call →</a><!-- keep in sync with site BOOKING_URL --></p></div>';
+      break;
+  }
+  $('#gTitle').textContent = t;
+  $('#gBody').innerHTML = b;
+  $('#prog').innerHTML = Array.from({length: STEPS}, (_, i) => '<i class="' + (i + 1 < s ? 'd' : i + 1 === s ? 'n' : '') + '"></i>').join('');
+  $('#prog').setAttribute('aria-label', 'Part ' + s + ' of ' + STEPS);
+  if (chipOpen === 'indent' && s === 2) typePad();
+}
+function setPhase(p, note=''){ S.phase = p; S.note = note; renderSwitches(); renderGuide(); }
+function nextStep(){
+  S.step++; S.phase = 0; S.note = ''; chipOpen = null; clearDemos();
+  if (S.step === 8) { S.sandbox = true; }
+  renderAll();
+  if (innerWidth < 1000) $('#guide').scrollTop = 0;
+}
+
+/* ---------- step logic ---------- */
+function emit(ev, d){
+  const s = S.step, p = S.phase;
+  if (s === 1 && ev === 'switch' && d.f === 'editor') setPhase(1);
+  if (s === 3) {
+    if (p === 0 && ev === 'noTranslator') setPhase(1);
+    if (p === 1 && ev === 'switch' && d.f === 'translator') setPhase(2);
+    if (p === 2 && ev === 'synErr') setPhase(3);
+  }
+  if (s === 4) {
+    if (p === 0 && ev === 'switch' && d.f === 'diag') setPhase(1);
+    if (p === 1 && ev === 'synErr' && d.diag) setPhase(2);
+    if (ev === 'colonFixed') setPhase(3);
+  }
+  if (s === 5) {
+    if (p === 0 && ev === 'noRuntime') setPhase(1);
+    if (p === 1 && ev === 'switch' && d.f === 'runtime') setPhase(2);
+    if (p === 2 && ev === 'output') setPhase(3);
+  }
+  if (s === 6) {
+    if (p === 0 && ev === 'switch' && d.f === 'debug') { setPhase(1); renderWatch({}); }
+    if (p === 1 && ev === 'output') setPhase(1, "It ran straight through, because there was no breakpoint to stop at. Tap the 5 next to line 5 first.");
+    if (p === 1 && ev === 'paused') {
+      if (d.line === 5) setPhase(2);
+      else setPhase(1, "Paused before line " + d.line + ". You can keep pressing Step to walk through it, or press Go to carry on to line 5. The breakpoint you want is on line 5.");
+    }
+    if (p === 3 && ev === 'output') setPhase(4);
+  }
+  if (s === 7) {
+    if (p === 1 && ev === 'runtimeErr') setPhase(2);
+  }
+}
+
+/* ---------- events ---------- */
+document.querySelectorAll('.sw').forEach(b => b.addEventListener('click', () => {
+  const f = b.dataset.f;
+  if (!S.sandbox && S.fac[f]) { b.classList.remove('shake'); void b.offsetWidth; b.classList.add('shake'); strip('Leave that one on for now. You can switch things off at the end.', ''); sfx('no'); return; }
+  if (!allowed(f)) {
+    b.classList.remove('shake'); void b.offsetWidth; b.classList.add('shake'); sfx('no');
+    strip(wanted() ? 'Not that one yet. Follow the instruction in the guide.' : 'Not yet. Follow the instruction in the guide.', '');
+    return;
+  }
+  S.fac[f] = !S.fac[f];
+  sfx(S.fac[f] ? 'on' : 'off');
+  if (f === 'debug' && !S.fac.debug) { S.bps.clear(); if (R) { stopRun(); shOut('>>> ', 'pr'); } }
+  if (f === 'runtime' && !S.fac.runtime && R) stopRun();
+  if (f === 'diag' && !S.fac.diag) { errAt = null; hideDlg(); }
+  if (f === 'editor') clearDemos();
+  strip('');
+  renderAll();
+  emit('switch', {f, on: S.fac[f]});
+}));
+$('#runBtn').addEventListener('click', () => run('run'));
+$('#goBtn').addEventListener('click', () => { if (R) advance(false); });
+$('#stepBtn').addEventListener('click', () => { if (R) advance(true); else run('step'); });
+$('#quitBtn').addEventListener('click', () => { if (R) { stopRun(); shOut('>>> ', 'pr'); renderCode(); renderWatch({}); strip('Stopped.', ''); } });
+$('#dlgOk').addEventListener('click', () => { hideDlg(); $('#runBtn').focus(); });
+$('#fixColon').addEventListener('click', () => {
+  S.prog.colon = true; errAt = null; hideDlg(); renderCode();
+  strip('Colon added to line 3.', 'ok'); sfx('ok'); emit('colonFixed');
+});
+$('#code').addEventListener('click', e => {
+  const g = e.target.closest('.gut'); if (!g || !S.fac.debug) return;
+  const n = +g.closest('.ln').dataset.n; if (n > 6) return;
+  S.bps.has(n) ? S.bps.delete(n) : S.bps.add(n);
+  sfx('tick'); renderCode();
+  strip(S.bps.has(n) ? 'Breakpoint set on line ' + n + '.' : 'Breakpoint on line ' + n + ' cleared.', '');
+});
+$('#gBody').addEventListener('click', e => {
+  const c = e.target.closest('[data-chip]');
+  if (c) { const k = c.dataset.chip; S.chips.add(k); chipOpen = k; sfx('tick'); renderGuide();
+    if (k === 'find' || k === 'ac') demo(k); else clearDemos();
+    if (k === 'colour') { const code = $('#code'); code.animate([{filter:'saturate(3)'},{filter:'none'}], {duration: reduce ? 1 : 900}); }
+    return; }
+  const sb = e.target.closest('[data-sb]');
+  if (sb) { const k = sb.dataset.sb, v = sb.dataset.v;
+    if (k === 'colon') S.prog.colon = v === '1'; else S.prog[k] = v;
+    if (R) stopRun(); errAt = null; hideDlg(); strip('basket.py changed.', ''); renderAll(); return; }
+  const a = e.target.closest('[data-act]'); if (!a) return;
+  const act = a.dataset.act;
+  if (act === 'next') nextStep();
+  if (act === 'yes') { sfx('no'); setPhase(3, "Add them up and you get 16.5. There are three prices. Have another go."); }
+  if (act === 'no') { sfx('ok'); setPhase(4); }
+  if (act === 'd3') { sfx('no'); setPhase(2, "That works for this basket. Put a fourth thing in it and you're wrong again. Pick the one that works for any basket."); }
+  if (act === 'dlen') { S.prog.div = 'len(prices)'; S.bps.clear(); if (R) { stopRun(); shOut('>>> ', 'pr'); } sfx('ok'); renderCode(); renderWatch({}); strip('Line 5 changed.', 'ok'); setPhase(3); }
+  if (act === 'empty') { S.prog.basket = 'empty'; renderCode(); sfx('tick'); strip('Line 2 changed.', ''); setPhase(1); }
+  if (act === 'restart') {
+    Object.assign(S, {step:1, phase:0, sandbox:false, note:''}); S.chips.clear(); S.bps.clear();
+    Object.keys(S.fac).forEach(k => S.fac[k] = false);
+    Object.assign(S.prog, {colon:false, div:'4', basket:'full'});
+    if (R) stopRun(); errAt = null; hideDlg(); $('#shell').innerHTML = ''; strip(''); renderAll(); scrollTo({top:0});
+  }
+});
+$('#soundBtn').addEventListener('click', () => {
+  S.sound = !S.sound; const b = $('#soundBtn');
+  b.setAttribute('aria-pressed', S.sound); b.textContent = S.sound ? 'Sound on' : 'Sound off'; sfx('on');
+});
+
+/* ---------- boot ---------- */
+$('#bootBtn').addEventListener('click', async () => {
+  const boot = document.createElement('div'); boot.className = 'boot'; boot.innerHTML = '<i></i><i></i><i></i><i></i>';
+  if (!reduce) document.body.appendChild(boot);
+  await wait(450);
+  $('#rawWrap').classList.add('gone'); $('#app').removeAttribute('aria-hidden');
+  await wait(600);
+  boot.remove();
+  document.querySelector('.sw[data-f="editor"]').focus({preventScroll:true});
+});
+
+renderAll();
+window.__ide = {S, srcLines, compile, run, advance, emit}; // exposed for testing
+})();
+</script>
+</body>
+</html>

@@ -4,6 +4,7 @@ import CardGrid from "@/components/CardGrid";
 import DetailCard from "@/components/DetailCard";
 import Faq from "@/components/Faq";
 import Hero from "@/components/Hero";
+import LessonCard from "@/components/LessonCard";
 import Main from "@/components/Main";
 import Portrait from "@/components/Portrait";
 import SiteFooter from "@/components/SiteFooter";
@@ -13,7 +14,7 @@ import { amber, amberDeep, display, ink, muted } from "@/components/tokens";
 export const metadata: Metadata = {
   title: "Student tuition",
   description:
-    "One-to-one GCSE and A-Level computer science tuition online, from a Head of Computer Science with fifteen years’ teaching experience.",
+    "One-to-one KS3, GCSE and A-Level computer science tuition and enrichment online, from a Head of Computer Science with fifteen years’ teaching experience.",
 };
 
 const QUESTIONS = [
@@ -35,7 +36,15 @@ const QUESTIONS = [
   },
   {
     q: "Do you teach my child’s exam board?",
-    a: "AQA, OCR and Edexcel at GCSE, and OCR and AQA at A-Level. I work to whichever specification your school runs.",
+    a: "KS3 follows your school’s scheme of work, or mine if there isn’t one. At GCSE I teach AQA, OCR and Edexcel; at A-Level, OCR and AQA. I work to whichever specification your school runs.",
+  },
+  {
+    q: "Do you teach KS3?",
+    a: "Yes. KS3 is where good habits start, especially in programming, and it’s a lot easier to build them at 12 than to fix them at 16.",
+  },
+  {
+    q: "What is enrichment?",
+    a: "Computer science beyond the exam: how AI actually works, algorithms in art and nature, and building real things. It suits students who are ahead, bored, or thinking about computer science at university. It’s £75 an hour, the same as tuition.",
   },
   {
     q: "Can I sit in?",
@@ -72,7 +81,7 @@ export default function Tuition() {
       <SiteHeader active="tuition" />
       <Hero
         number="01"
-        eyebrow="GCSE & A-Level · One to one · Online"
+        eyebrow="KS3, GCSE & A-Level · Enrichment · One to one · Online"
         accent={amber}
         zoomTo="tuition"
         cta
@@ -110,7 +119,8 @@ export default function Tuition() {
                 }}
               >
                 I’m Head of Computer Science at an independent school in London,
-                and I’ve taught GCSE and A-Level for over fifteen years. I have
+                and I’ve taught KS3, GCSE and A-Level for over fifteen years. I
+                have
                 a BSc in Computer Science and a PGCE. Before teaching, I was a
                 developer and project manager at BT, so I teach this subject as
                 something people actually do, not just something on the
@@ -130,10 +140,65 @@ export default function Tuition() {
           </div>
         </section>
 
-        <CardGrid>
+        <section id="try">
+          <h2
+            style={{
+              fontFamily: display,
+              fontWeight: 800,
+              fontSize: "clamp(1.5rem, 3vw, 2rem)",
+              letterSpacing: "-0.02em",
+              margin: "14px 0 8px",
+            }}
+          >
+            Try a lesson
+          </h2>
+          <p style={{ margin: "0 0 18px", color: muted, textWrap: "pretty" }}>
+            These are three of the interactive lessons I’ve built. They’re free
+            to try, and they’re the real thing.
+          </p>
+          <CardGrid>
+            <LessonCard
+              href="/try/not-magic"
+              label="KS3 · Lesson 1 of 4"
+              title="Not Magic: rules or examples?"
+            >
+              Build a cat detector two ways: write the rules yourself, or teach
+              it with examples.
+            </LessonCard>
+            <LessonCard
+              href="/try/ide"
+              label="GCSE · OCR J277 2.5.2"
+              title="The IDE"
+            >
+              Switch on an IDE one facility at a time, then find out which tool
+              catches which error.
+            </LessonCard>
+            <LessonCard
+              href="/try/lexical-analysis"
+              label="A-Level · OCR H446 1.2.2 (e)"
+              title="Lexical analysis"
+            >
+              Type into a live lexer and watch your code become tokens. Then
+              find out what the IDE actually hands to the compiler.
+            </LessonCard>
+          </CardGrid>
+          <p
+            style={{
+              margin: "18px 0 0",
+              fontWeight: 800,
+              color: amberDeep,
+              textWrap: "pretty",
+            }}
+          >
+            Tuition clients get the full set, from KS3 to A-Level.
+          </p>
+        </section>
+
+        <CardGrid min={420}>
           <DetailCard label="Boards" title="AQA · OCR · Edexcel" accent={amber}>
-            AQA, OCR and Edexcel at GCSE; OCR and AQA at A-Level. Whichever
-            specification your school runs, we work to that one.
+            KS3 follows your school’s scheme, or mine. AQA, OCR and Edexcel at
+            GCSE; OCR and AQA at A-Level. Whichever specification your school
+            runs, we work to that one.
           </DetailCard>
           <DetailCard label="Focus" title="Where marks go" accent={amber}>
             Algorithms, programming, systems and exam craft: the four places a
@@ -142,6 +207,11 @@ export default function Tuition() {
           <DetailCard label="Approach" title="Straight feedback" accent={amber}>
             No cut corners and no false praise. You’ll always know exactly
             what’s working and what needs another pass.
+          </DetailCard>
+          <DetailCard label="Enrichment" title="Beyond the syllabus" accent={amber}>
+            How AI really works, the algorithms hiding in everyday things, and
+            real programming projects. For students who’ve outgrown school
+            computer science, or who are thinking about it as a degree.
           </DetailCard>
         </CardGrid>
 
