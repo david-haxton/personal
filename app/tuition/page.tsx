@@ -153,8 +153,8 @@ export default function Tuition() {
             Try a lesson
           </h2>
           <p style={{ margin: "0 0 18px", color: muted, textWrap: "pretty" }}>
-            These are three of the interactive lessons I’ve built. They’re free
-            to try, and they’re the real thing.
+            These are three of the interactive lessons I use in my teaching.
+            They’re free to try.
           </p>
           <CardGrid>
             <LessonCard
@@ -190,7 +190,8 @@ export default function Tuition() {
               textWrap: "pretty",
             }}
           >
-            Tuition clients get the full set, from KS3 to A-Level.
+            In tuition, lessons like these support the teaching; they don’t
+            replace it. Every session is one to one, built around what you need.
           </p>
         </section>
 
