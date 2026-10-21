@@ -5,6 +5,7 @@ import SiteFooter from "@/components/SiteFooter";
 import SiteHeader from "@/components/SiteHeader";
 import {
   amber,
+  amberDeep,
   coral,
   cream,
   display,
@@ -21,7 +22,8 @@ const DOORS = [
     number: "01",
     kicker: "Tuition",
     title: "Student tuition",
-    body: "GCSE & A-Level, one to one. Grade 9 and A* work, exam technique included.",
+    body: "KS3, GCSE and A-Level, one to one. Exam technique for the top grades, and enrichment for students who want to go further.",
+    extra: { href: "/tuition#try", label: "Try a free lesson →" },
     accent: amber,
   },
   {
@@ -129,7 +131,7 @@ export default function Home() {
               }}
             >
               Head of Computer Science at a London independent school, with
-              fifteen years teaching GCSE and A-Level. Before that, a developer
+              fifteen years teaching KS3, GCSE and A-Level. Before that, a developer
               and project manager at BT. Pick where you&rsquo;d like to start.
             </p>
             <IslandControls />
@@ -157,10 +159,14 @@ export default function Home() {
         }}
       >
         {DOORS.map((door) => (
-          <a
+          /* Not one big <a>: the tuition door carries a second link, and
+             links can't nest. The title's link stretches over the whole card
+             (.door-link in globals.css) and the second link sits above it. */
+          <div
             key={door.href}
-            href={door.href}
+            className="door"
             style={{
+              position: "relative",
               display: "flex",
               background: cream,
               color: ink,
@@ -228,11 +234,32 @@ export default function Home() {
                     margin: "0 0 6px",
                   }}
                 >
-                  {door.title}
+                  <a
+                    href={door.href}
+                    className="door-link"
+                    style={{ color: "inherit", textDecoration: "none" }}
+                  >
+                    {door.title}
+                  </a>
                 </h2>
                 <p style={{ margin: 0, color: muted, textWrap: "pretty" }}>
                   {door.body}
                 </p>
+                {door.extra && (
+                  <a
+                    href={door.extra.href}
+                    style={{
+                      position: "relative",
+                      zIndex: 1,
+                      display: "inline-block",
+                      marginTop: 8,
+                      fontWeight: 800,
+                      color: amberDeep,
+                    }}
+                  >
+                    {door.extra.label}
+                  </a>
+                )}
               </div>
               <span
                 className="btn-amber"
@@ -252,7 +279,7 @@ export default function Home() {
                 Enter →
               </span>
             </div>
-          </a>
+          </div>
         ))}
       </main>
       <SiteFooter />

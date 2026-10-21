@@ -9,7 +9,7 @@ export const metadata: Metadata = {
     template: "%s · David Haxton",
   },
   description:
-    "One-to-one GCSE & A-Level computer science tuition, AI for adults at any starting point, and web work built end to end.",
+    "One-to-one KS3, GCSE and A-Level computer science tuition and enrichment, AI for adults at any starting point, and web work built end to end.",
 };
 
 export default function RootLayout({ children }: { children: React.ReactNode }) {

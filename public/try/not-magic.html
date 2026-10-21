@@ -1,0 +1,894 @@
+<!DOCTYPE html>
+<html lang="en-GB">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<meta name="description" content="An interactive KS3 lesson on how AI learns from examples, by David Haxton.">
+<title>Not Magic 1: Rules or examples?</title>
+<style>
+:root{
+  --bg:#f3f4f7; --surface:#ffffff; --panel:#e9ebf0; --line:#d6d9e1;
+  --ink:#1d2433; --muted:#5d6577;
+  --cobalt:#3b5bfd; --coral:#ff5a6e; --teal:#0e9f9a;
+  --sans:system-ui,-apple-system,"Segoe UI Variable","Segoe UI",Roboto,sans-serif;
+  --code:ui-monospace,"SF Mono","Cascadia Code",Consolas,monospace;
+}
+*{box-sizing:border-box}
+html{scroll-behavior:smooth}
+body{margin:0;background:var(--bg);color:var(--ink);font-family:var(--sans);font-size:1.0625rem;line-height:1.6;-webkit-font-smoothing:antialiased}
+button{font:inherit;color:inherit;cursor:pointer}
+:focus-visible{outline:2px solid var(--cobalt);outline-offset:3px}
+.wrap{max-width:1120px;margin:0 auto;padding:0 32px}
+.prose{max-width:640px}
+p{margin:0 0 14px}
+code,.code{font-family:var(--code);font-size:.92em}
+
+/* rail */
+.rail{position:sticky;top:0;z-index:40;background:color-mix(in srgb,var(--bg) 82%,transparent);backdrop-filter:saturate(1.4) blur(10px);border-bottom:1px solid var(--line)}
+.rail .wrap{display:flex;align-items:center;gap:24px;height:56px}
+.mark{font-weight:700;letter-spacing:-.02em;white-space:nowrap}
+.mark small{font-weight:500;color:var(--muted);margin-left:10px;font-size:.88rem;letter-spacing:0}
+.steps{display:flex;gap:4px;margin:0 0 0 auto;list-style:none;padding:0}
+.steps a{display:flex;align-items:center;gap:8px;text-decoration:none;color:var(--muted);font-size:.86rem;padding:6px 10px;border-radius:8px}
+.steps a:hover{background:var(--panel);color:var(--ink)}
+.steps i{width:14px;height:14px;border-radius:50%;border:1.5px solid currentColor;flex:none;position:relative}
+.steps li.done a{color:var(--ink)}
+.steps li.done i{background:var(--cobalt);border-color:var(--cobalt)}
+.steps li.done i::after{content:"";position:absolute;left:3.5px;top:1px;width:3.5px;height:7px;border:solid #fff;border-width:0 1.5px 1.5px 0;transform:rotate(45deg)}
+@media (max-width:760px){.steps span{display:none}}
+
+/* hero */
+.hero{padding:80px 0 72px}
+.hero .wrap{display:grid;grid-template-columns:1.2fr 1fr;gap:56px;align-items:center}
+.kicker{color:var(--muted);margin-bottom:18px}
+h1{font-size:clamp(3rem,7.4vw,6.4rem);line-height:.95;letter-spacing:-.055em;font-weight:750;margin:0 0 28px}
+.lede{font-size:1.25rem;line-height:1.5;color:var(--ink);max-width:30ch}
+.btn{display:inline-flex;align-items:center;gap:10px;background:var(--ink);color:#fff;border:0;border-radius:10px;padding:13px 22px;font-weight:600;text-decoration:none;transition:background .15s}
+.btn:hover{background:var(--cobalt)}
+.btn[disabled]{background:var(--line);color:var(--muted);cursor:not-allowed}
+.btn.ghost{background:transparent;color:var(--ink);box-shadow:inset 0 0 0 1.5px var(--ink)}
+.btn.ghost:hover{background:var(--ink);color:#fff}
+.btn.sm{padding:7px 14px;font-size:.92rem;border-radius:8px}
+.seen{background:var(--surface);border-radius:20px;padding:22px;border:1px solid var(--line)}
+.seen canvas{width:100%;aspect-ratio:1/1;display:block;cursor:crosshair}
+.seen .cap{display:flex;justify-content:space-between;gap:16px;margin-top:14px;font-size:.9rem;color:var(--muted)}
+.seen .val{font-family:var(--code);color:var(--ink);white-space:nowrap}
+@media (max-width:860px){.hero .wrap{grid-template-columns:1fr}.seen{max-width:420px}}
+
+/* parts */
+section.part{padding:88px 0;border-top:1px solid var(--line)}
+.step-n{font-family:var(--code);font-size:.9rem;color:var(--cobalt);margin-bottom:10px}
+h2{font-size:clamp(2rem,4vw,3rem);letter-spacing:-.04em;line-height:1.02;font-weight:720;margin:0 0 18px}
+h3{font-size:1.15rem;letter-spacing:-.01em;margin:0 0 12px}
+.fig{margin-top:40px}
+
+/* rule machine */
+.rm{display:grid;grid-template-columns:300px 1fr;gap:32px;align-items:start}
+@media (max-width:960px){.rm{grid-template-columns:1fr}}
+.controls{position:sticky;top:76px;background:var(--surface);border:1px solid var(--line);border-radius:16px;padding:20px}
+.controls .lbl{font-size:.88rem;color:var(--muted);margin-bottom:12px}
+.rule{display:flex;align-items:center;justify-content:space-between;gap:12px;width:100%;background:none;border:0;border-bottom:1px solid var(--line);padding:11px 0;text-align:left}
+.rule:last-of-type{border-bottom:0}
+.sw{width:38px;height:22px;border-radius:999px;background:var(--line);position:relative;flex:none;transition:background .18s}
+.sw::after{content:"";position:absolute;top:3px;left:3px;width:16px;height:16px;border-radius:50%;background:#fff;box-shadow:0 1px 2px rgba(29,36,51,.25);transition:left .18s}
+.rule[aria-pressed="true"] .sw{background:var(--cobalt)}
+.rule[aria-pressed="true"] .sw::after{left:19px}
+.expr{margin-top:16px;background:var(--ink);color:#e6e9f2;border-radius:10px;padding:12px 14px;font-family:var(--code);font-size:.88rem;line-height:1.5;word-break:break-word}
+.expr .kw{color:#ff93a1}.expr .v{color:#9fb2ff}
+.scorebox{margin-top:16px;display:flex;align-items:baseline;gap:10px}
+.scorebox b{font-size:2.6rem;letter-spacing:-.05em;line-height:1;font-weight:720}
+.scorebox span{color:var(--muted);font-size:.92rem}
+.tablewrap{overflow-x:auto;background:var(--surface);border:1px solid var(--line);border-radius:16px}
+table.fm{border-collapse:collapse;width:100%;min-width:720px;font-size:.92rem}
+.fm th,.fm td{padding:7px 8px;text-align:center;border-bottom:1px solid var(--line)}
+.fm thead th{font-size:.78rem;font-weight:600;color:var(--muted);vertical-align:bottom;line-height:1.2;padding-top:14px}
+.fm th.on{color:var(--cobalt)}
+.fm td.on{background:color-mix(in srgb,var(--cobalt) 7%,transparent)}
+.fm tbody tr:last-child td{border-bottom:0}
+.fm td.item{text-align:left;min-width:220px;padding-left:12px}
+.fm td.item .in{display:flex;align-items:center;gap:10px}
+.fm td.item svg{width:46px;height:38px;flex:none}
+.fm .truth,.fm .say{white-space:nowrap}
+.fm .dot{display:inline-block;width:11px;height:11px;border-radius:50%;background:var(--ink)}
+.fm .no{display:inline-block;width:11px;height:11px;border-radius:50%;box-shadow:inset 0 0 0 1.5px var(--line)}
+.fm .truth{color:var(--muted)}
+.fm .say{font-weight:600}
+.fm .ok{color:var(--cobalt);font-weight:700}
+.fm .bad{color:var(--coral);font-weight:700}
+.fm tr.wrong td{background:color-mix(in srgb,var(--coral) 8%,transparent)}
+.fm tr.twin td.item{box-shadow:inset 3px 0 0 var(--coral)}
+.ic .s{fill:none;stroke:var(--ink);stroke-width:2.2;stroke-linecap:round;stroke-linejoin:round}
+.ic .f{fill:var(--ink)}
+.reveal{display:none;margin-top:28px;background:var(--surface);border:1px solid var(--line);border-radius:16px;padding:24px;gap:32px;grid-template-columns:auto 1fr;align-items:start}
+.reveal.on{display:grid}
+@media (max-width:760px){.reveal.on{grid-template-columns:1fr}}
+.heat{display:grid;grid-template-columns:repeat(8,30px);gap:4px}
+.heat div{width:30px;height:30px;border-radius:5px;position:relative}
+.heat div.you{outline:2.5px solid var(--coral);outline-offset:2px}
+.heat div.best::after{content:"";position:absolute;inset:11px;border-radius:50%;background:#fff}
+.legend{display:flex;align-items:center;gap:8px;font-size:.82rem;color:var(--muted);margin-top:12px}
+.legend .ramp{width:110px;height:8px;border-radius:4px;background:linear-gradient(90deg,#e9ebf0,var(--cobalt))}
+.big-num{font-size:3.4rem;font-weight:720;letter-spacing:-.05em;line-height:1;margin-bottom:6px}
+.hint{color:var(--muted);font-size:.92rem;margin-top:14px}
+
+/* learning machine */
+.lm{display:grid;grid-template-columns:minmax(260px,380px) 1fr;gap:32px;align-items:start}
+@media (max-width:900px){.lm{grid-template-columns:1fr}}
+.pad{background:var(--surface);border:1px solid var(--line);border-radius:16px;padding:16px}
+.pad .prompt{font-weight:600;margin:0 2px 12px;display:flex;justify-content:space-between;gap:10px}
+.pad .prompt span{color:var(--muted);font-weight:500}
+.pad canvas{width:100%;aspect-ratio:1/1;display:block;border-radius:10px;touch-action:none;cursor:crosshair;background:var(--bg);
+  background-image:linear-gradient(var(--line) 1px,transparent 1px),linear-gradient(90deg,var(--line) 1px,transparent 1px);background-size:25% 25%}
+.pad .row{display:flex;gap:10px;margin-top:12px}
+.pad .row .btn{flex:1;justify-content:center}
+.shelf{display:block;width:100%;text-align:left;background:var(--surface);border:1px solid var(--line);border-radius:14px;padding:14px 16px;margin-bottom:12px;transition:border-color .15s,box-shadow .15s}
+.shelf[aria-pressed="true"]{border-color:var(--c);box-shadow:0 0 0 1px var(--c)}
+.shelf .top{display:flex;align-items:center;gap:10px;margin-bottom:10px}
+.shelf .sw2{width:10px;height:10px;border-radius:3px;background:var(--c)}
+.shelf .nm{font-weight:650}
+.shelf .ct{margin-left:auto;font-size:.85rem;color:var(--muted);font-family:var(--code)}
+.thumbs{display:flex;flex-wrap:wrap;gap:6px;min-height:46px}
+.thumbs canvas{width:46px;height:46px;border-radius:8px;background:var(--bg);border:1px solid var(--line)}
+.thumbs .empty{width:46px;height:46px;border-radius:8px;border:1px dashed var(--line)}
+.thumbs canvas.hit{border-color:var(--coral);box-shadow:0 0 0 2px var(--coral)}
+.shelf.scan{animation:scan .45s ease}
+@keyframes scan{50%{background:color-mix(in srgb,var(--c) 14%,#fff)}}
+.status{font-family:var(--code);font-size:.88rem;color:var(--muted);min-height:1.6em;margin:6px 0 0}
+.tester{display:none}
+.tester.on{display:block}
+.tgrid{display:grid;grid-template-columns:150px 1fr;gap:22px;align-items:start;background:var(--surface);border:1px solid var(--line);border-radius:16px;padding:18px}
+@media (max-width:560px){.tgrid{grid-template-columns:1fr}}
+.tgrid canvas.mv{width:150px;height:150px;border-radius:8px;background:var(--bg);display:block}
+.tgrid .mvcap{font-size:.8rem;color:var(--muted);margin-top:8px;line-height:1.35}
+.bar{display:grid;grid-template-columns:76px 1fr 44px;gap:10px;align-items:center;margin:0 0 10px}
+.bar b{font-weight:600;font-size:.92rem}
+.bar .track{height:10px;border-radius:999px;background:var(--panel);overflow:hidden}
+.bar .fill{height:100%;width:0;border-radius:999px;background:var(--c);transition:width .3s ease}
+.bar span{font-family:var(--code);font-size:.86rem;text-align:right;color:var(--muted)}
+.guessline{font-size:1.15rem;font-weight:650;margin-bottom:14px;min-height:1.5em}
+.fixrow{display:flex;flex-wrap:wrap;gap:8px;align-items:center;margin-top:16px;font-size:.92rem;color:var(--muted)}
+.mapcard{margin-top:22px;background:var(--surface);border:1px solid var(--line);border-radius:16px;padding:18px}
+.mapcard canvas{width:100%;height:380px;display:block}
+.maphead{display:flex;flex-wrap:wrap;gap:14px;align-items:baseline;justify-content:space-between;margin-bottom:10px}
+.maphead p{margin:0;color:var(--muted);font-size:.9rem;max-width:58ch}
+.keys{display:flex;gap:14px;font-size:.85rem}
+.keys span{display:flex;align-items:center;gap:6px}
+.keys i{width:10px;height:10px;border-radius:3px;background:var(--c)}
+.challenges{display:none;margin-top:40px;grid-template-columns:1fr 1fr;gap:32px}
+.challenges.on{display:grid}
+@media (max-width:760px){.challenges.on{grid-template-columns:1fr}}
+.challenges ol{margin:0;padding-left:1.2em}
+.challenges li{margin-bottom:8px}
+.aside{background:var(--panel);border-radius:14px;padding:18px 20px;font-size:.94rem}
+
+/* sort */
+.deck{display:flex;flex-wrap:wrap;gap:10px;min-height:62px;padding:14px;border:1px dashed var(--line);border-radius:14px;margin:36px 0 18px;background:var(--surface)}
+.deck:empty::after{content:"All cards placed. Check your sort below.";color:var(--muted);align-self:center}
+.card{text-align:left;background:var(--surface);border:1px solid var(--line);border-radius:10px;padding:10px 14px;font-weight:600;touch-action:none;user-select:none;position:relative;z-index:1;box-shadow:0 1px 2px rgba(29,36,51,.06)}
+.card:hover{border-color:var(--ink)}
+.card.sel{border-color:var(--cobalt);box-shadow:0 0 0 2px var(--cobalt)}
+.card.drag{z-index:30;box-shadow:0 14px 30px rgba(29,36,51,.18);cursor:grabbing}
+.card .why{display:none;font-weight:400;font-size:.88rem;color:var(--muted);margin-top:4px;max-width:40ch}
+.card.checked .why{display:block}
+.card.ok{border-color:var(--cobalt)}
+.card.bad{border-color:var(--coral);box-shadow:0 0 0 1px var(--coral)}
+.card .mk{display:none;margin-right:8px}
+.card.checked .mk{display:inline}
+.card.ok .mk{color:var(--cobalt)}.card.bad .mk{color:var(--coral)}
+.bins{display:grid;grid-template-columns:1fr 1fr;gap:18px}
+@media (max-width:700px){.bins{grid-template-columns:1fr}}
+.bin{border-radius:16px;padding:18px;min-height:220px;background:var(--panel);display:flex;flex-direction:column;gap:10px;border:1.5px solid transparent;transition:border-color .15s,background .15s}
+.bin.over{border-color:var(--cobalt);background:color-mix(in srgb,var(--cobalt) 8%,var(--panel))}
+.bin .bh{font-weight:700;font-size:1.15rem;letter-spacing:-.01em}
+.bin .bs{font-size:.88rem;color:var(--muted);margin-top:-8px}
+.bin .slot{display:flex;flex-direction:column;gap:8px;align-items:flex-start}
+.sortbar{margin-top:20px;display:flex;align-items:center;gap:16px;flex-wrap:wrap}
+
+/* exit */
+.exitq{background:var(--surface);border:1px solid var(--line);border-radius:16px;padding:28px;max-width:760px;margin-top:36px}
+.exitq .q{font-size:1.2rem;font-weight:650;letter-spacing:-.01em;margin-bottom:18px}
+.opts{display:flex;gap:10px;flex-wrap:wrap;margin-bottom:20px}
+.opt{border:1.5px solid var(--line);border-radius:10px;padding:10px 18px;background:var(--surface);font-weight:600}
+.opt:hover{border-color:var(--ink)}
+.opt[aria-pressed="true"]{background:var(--ink);border-color:var(--ink);color:#fff}
+textarea{width:100%;min-height:110px;border:1.5px solid var(--line);border-radius:10px;padding:12px 14px;font:inherit;background:var(--bg);color:var(--ink);resize:vertical}
+textarea:focus{outline:none;border-color:var(--cobalt)}
+.model{display:none;margin-top:18px;border-left:3px solid var(--cobalt);padding:4px 0 4px 16px}
+.model.on{display:block}
+
+/* finale */
+.finale{padding:110px 0 40px;border-top:1px solid var(--line)}
+.finale h2{font-size:clamp(2.4rem,6vw,4.8rem);max-width:14ch}
+.finale h2 span{color:var(--cobalt)}
+.foot{display:flex;justify-content:space-between;flex-wrap:wrap;gap:12px;padding:56px 0 0;font-size:.85rem;color:var(--muted)}
+.finale a{color:var(--cobalt)}
+
+@media (prefers-reduced-motion:reduce){*,*::before,*::after{animation:none!important;transition:none!important;scroll-behavior:auto!important}}
+
+/* audit fixes: stop grid children forcing page width; compact rail on phones */
+.hero .wrap>*,.rm>*,.lm>*,.lab2>*,.trainer>*,.tester2>*,.chat>*,.row2>*,.tgrid>*,.gal>*,.bins>*,.facts>*,.casecards>*,.warm>*{min-width:0}
+@media (max-width:600px){.wrap{padding:0 18px}.rail .wrap{gap:10px}.mark small{display:none}.steps{gap:0}.steps a{padding:6px 5px}}
+/* lesson navigation layer */
+.rail .wrap{height:auto;min-height:60px;gap:12px}
+.navtabs{display:flex;gap:4px;overflow-x:auto;margin-left:auto;padding:8px 0;scrollbar-width:thin}
+.tab{display:flex;align-items:center;gap:8px;border:0;background:transparent;border-radius:10px;padding:8px 12px;font-weight:600;font-size:.9rem;color:var(--muted);white-space:nowrap}
+.tab:hover{background:var(--panel);color:var(--ink)}
+.tab[aria-selected="true"]{background:var(--ink);color:#fff}
+.tab .num{width:20px;height:20px;border-radius:50%;display:grid;place-items:center;font-size:.72rem;border:1.5px solid currentColor;flex:none}
+.tab.done .num{background:var(--cobalt);border-color:var(--cobalt);color:#fff;font-size:0}
+.tab.done .num::after{content:"";width:3.5px;height:7px;border:solid #fff;border-width:0 1.5px 1.5px 0;transform:rotate(45deg) translate(-1px,-1px);font-size:.72rem}
+.screen:not(.on){height:0;overflow:hidden;visibility:hidden;padding:0!important;margin:0!important;border:0!important}
+.screen.on{animation:scr .25s ease}
+@keyframes scr{from{opacity:0;transform:translateY(6px)}to{opacity:1;transform:none}}
+.screen section.part{border-top:0;padding-top:40px}
+.screen .hero{padding-top:56px}
+.task{display:flex;gap:14px;align-items:flex-start;background:var(--ink);color:#e6e9f2;border-radius:14px;padding:14px 18px;margin:0 0 26px;max-width:860px}
+.task b{color:#fff;white-space:nowrap}
+.navrow{display:flex;justify-content:space-between;align-items:center;gap:12px;margin:36px auto 10px;padding-top:22px;border-top:1px solid var(--line)}
+.navrow .where{font-size:.88rem;color:var(--muted)}
+.screen .finale{border-top:1px solid var(--line);margin-top:30px}
+@media (max-width:760px){.rail .mark{display:none}.navtabs{margin-left:0}.tab{padding:8px 9px}.tab .lbl{display:none}.tab[aria-selected="true"] .lbl{display:inline}}
+@media (prefers-reduced-motion:reduce){.screen.on{animation:none}}
+</style>
+<style>/* Back link to the main site, added for davidhaxton.co.uk */
+#dh-back{position:fixed;top:calc(8px + env(safe-area-inset-top, 0px));left:8px;z-index:1000;display:inline-block;background:#fff;color:#1C1A3A;border:2px solid #1C1A3A;border-radius:999px;padding:3px 10px;font:700 12px/1.3 system-ui,-apple-system,"Segoe UI",sans-serif;text-decoration:none;white-space:nowrap;box-shadow:0 2px 6px rgba(0,0,0,.18)}
+#dh-back:hover{background:#1C1A3A;color:#fff}
+#dh-back:focus-visible{outline:3px solid #FFB320;outline-offset:2px}
+/* Start the lesson tabs clear of the back link. 172px is the link's width plus room;
+   on wide screens the centred .wrap is already clear of it, so this falls back to 32px. */
+.rail .wrap{padding-left:max(32px,min(172px,calc(172px - (100vw - 1120px) / 2)))}
+</style>
+</head>
+<body>
+<!-- Back to the main site. Fixed, above everything including any opening overlay. -->
+<a id="dh-back" href="/tuition">← davidhaxton.co.uk</a>
+
+<nav class="rail" aria-label="Lesson progress">
+  <div class="wrap">
+    <div class="mark">Not Magic<small>Lesson 1</small></div>
+    <ol class="steps">
+      <li id="cp-rules"><a href="#rules"><i></i><span>Rule Machine</span></a></li>
+      <li id="cp-learn"><a href="#learn"><i></i><span>Learning Machine</span></a></li>
+      <li id="cp-sort"><a href="#sort"><i></i><span>Sort</span></a></li>
+      <li id="cp-exit"><a href="#exit"><i></i><span>Exit question</span></a></li>
+    </ol>
+  </div>
+</nav>
+
+<header class="hero">
+  <div class="wrap">
+    <div>
+      <p class="kicker">Ms Ellis wants a computer that can spot a cat in a photo.</p>
+      <h1>Rules or examples?</h1>
+      <p class="lede">There are two ways to build it. Write the rules yourself, or show it examples and let it find the pattern. Today you build both.</p>
+      <a class="btn" href="#rules">Start with the rules</a>
+    </div>
+    <figure class="seen" style="margin:0">
+      <canvas id="heroGrid" aria-label="A cat drawing shown as a grid of numbers"></canvas>
+      <figcaption class="cap"><span>This is what a computer sees: 576 numbers. Hover to read them.</span><span class="val" id="heroVal">0.00</span></figcaption>
+    </figure>
+  </div>
+</header>
+
+<main>
+<section class="part" id="rules">
+  <div class="wrap">
+    <div class="prose">
+      <div class="step-n">Part 1 of 4</div>
+      <h2>The Rule Machine</h2>
+      <p>Ms Ellis has 11 photos from the school photo competition. Someone has already recorded what can be seen in each one. Your job is to write the rule that decides which photos are cats.</p>
+      <p>The machine follows your rule exactly, and the table updates instantly.</p>
+    </div>
+    <div class="rm fig">
+      <div class="controls">
+        <div class="lbl">A photo is a cat if it has all of:</div>
+        <div id="ruleList"></div>
+        <div class="expr" id="expr" aria-live="polite"></div>
+        <div class="scorebox"><b id="score">6</b><span>out of 11 correct</span></div>
+        <div class="hint" id="tried">Rules tried: 1 of 3</div>
+      </div>
+      <div>
+        <div class="tablewrap"><table class="fm" id="fm"></table></div>
+        <div class="reveal" id="reveal" aria-live="polite">
+          <div>
+            <div class="heat" id="heat"></div>
+            <div class="legend"><span id="loLab">Worst</span><span class="ramp"></span><span id="hiLab">Best</span></div>
+          </div>
+          <div>
+            <div class="big-num" id="bestNum">8 / 11</div>
+            <p><strong>The best any rule can do.</strong> The computer has tried every possible combination of these six rules: all 64 of them, shown as squares. Your current rule has a pink outline. The best rules have a white dot. Click any square to try that rule.</p>
+            <p>Now compare the rows for the cat sitting up, the fox, and the hare (marked in pink on the left edge of the table). Their data is identical. If the data cannot tell them apart, no rule written using that data ever can. Every rule that keeps the fox out also throws out a real cat.</p>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+</section>
+
+<section class="part" id="learn">
+  <div class="wrap">
+    <div class="prose">
+      <div class="step-n">Part 2 of 4</div>
+      <h2>The Learning Machine</h2>
+      <p>This machine has no rules at all. Nobody has told it what a fish looks like. You teach it with examples instead.</p>
+      <p>After training, every new drawing is turned into numbers and compared with your examples.</p>
+    </div>
+    <div class="lm fig">
+      <div class="pad">
+        <div class="prompt" id="padPrompt">Draw a cat face <span>1 of 4</span></div>
+        <canvas id="pad" aria-label="Drawing area"></canvas>
+        <div class="row">
+          <button class="btn ghost" id="clearPad">Clear</button>
+          <button class="btn" id="addEx">Add example</button>
+        </div>
+      </div>
+      <div>
+        <div id="shelves"></div>
+        <div style="display:flex;gap:14px;align-items:center;flex-wrap:wrap;margin-top:6px">
+          <button class="btn" id="trainBtn" disabled>Train the machine</button>
+          <span class="status" id="status" aria-live="polite">Examples: 0. Rules: 0.</span>
+        </div>
+        <div class="tester" id="tester" aria-live="polite">
+          <div class="tgrid">
+            <div>
+              <canvas class="mv" id="mv" width="150" height="150"></canvas>
+              <div class="mvcap">Your drawing as the machine sees it: 784 numbers.</div>
+            </div>
+            <div>
+              <div class="guessline" id="guessline">Draw something new.</div>
+              <div id="bars"></div>
+              <div class="fixrow" id="fixrow"></div>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+    <div class="mapcard tester" id="mapcard">
+      <div class="maphead">
+        <h3 style="margin:0">Where your drawing lands</h3>
+        <div class="keys" id="keys"></div>
+        <p>Each example is placed so that similar drawings sit close together. The pink lines join your drawing to the three examples it is most like. That is the whole trick: similar numbers, similar answer.</p>
+      </div>
+      <canvas id="map" aria-label="Map of examples by similarity"></canvas>
+    </div>
+    <div class="challenges" id="challenges">
+      <div>
+        <h3>Try to break it</h3>
+        <ol>
+          <li>Draw a fish facing the other way. Where does it land on the map?</li>
+          <li>Draw a tiny star in one corner. Does size or position matter?</li>
+          <li>Draw something that is none of the three, eg a house. The machine still picks one. Why can it never say "I do not know"?</li>
+          <li>When it gets one wrong, teach it the right answer and draw a similar one again.</li>
+        </ol>
+      </div>
+      <div class="aside">
+        <h3>How honest is this machine?</h3>
+        <p style="margin:0">This one keeps every drawing you gave it and compares new drawings with all of them. Large systems, such as the one behind Google's Quick, Draw!, learn from millions of drawings and keep only the patterns, not the drawings. The principle is the same: no rules, just examples. The map is flattened from 784 dimensions to two, so distances on it are only approximate.</p>
+      </div>
+    </div>
+  </div>
+</section>
+
+<section class="part" id="sort">
+  <div class="wrap">
+    <div class="prose">
+      <div class="step-n">Part 3 of 4</div>
+      <h2>Rules or examples?</h2>
+      <p>Drag each card into a box, or click a card and then a box. Some of these are not obvious. Decide anyway, then check.</p>
+    </div>
+    <div class="deck" id="deck"></div>
+    <div class="bins">
+      <div class="bin" id="binRules" role="button" tabindex="0" aria-label="Follows rules">
+        <div class="bh">Follows rules</div>
+        <div class="bs">A person wrote every instruction.</div>
+        <div class="slot"></div>
+      </div>
+      <div class="bin" id="binLearn" role="button" tabindex="0" aria-label="Learned from examples">
+        <div class="bh">Learned from examples</div>
+        <div class="bs">It found the patterns in data.</div>
+        <div class="slot"></div>
+      </div>
+    </div>
+    <div class="sortbar">
+      <button class="btn" id="checkSort" disabled>Check my sort</button>
+      <span id="sortScore" aria-live="polite"></span>
+    </div>
+  </div>
+</section>
+
+<section class="part" id="exit">
+  <div class="wrap">
+    <div class="prose">
+      <div class="step-n">Part 4 of 4</div>
+      <h2>Exit question</h2>
+      <p>Answer on your own. Write your reason before you look at the answer.</p>
+    </div>
+    <div class="exitq">
+      <div class="q">A spam filter was shown 10,000 emails, each already marked "spam" or "not spam". Does it follow rules or learn from examples?</div>
+      <div class="opts">
+        <button class="opt" data-v="rules" aria-pressed="false">It follows rules</button>
+        <button class="opt" data-v="learn" aria-pressed="false">It learns from examples</button>
+      </div>
+      <label for="why" style="font-weight:600;display:block;margin-bottom:8px">How do you know?</label>
+      <textarea id="why" placeholder="Explain your answer in a sentence or two."></textarea>
+      <div style="margin-top:14px"><button class="btn" id="reveal2" disabled>Show the answer</button></div>
+      <div class="model" id="model" aria-live="polite"></div>
+    </div>
+  </div>
+</section>
+</main>
+
+<footer class="finale">
+  <div class="wrap">
+    <h2>Rules are written. <span>Patterns are learned.</span></h2>
+    <div class="prose">
+      <p>The Rule Machine could never reject the fox, because its data matched the cat exactly. The Learning Machine was never given a single rule, yet it learned to tell your drawings apart. Most modern AI works the second way.</p>
+      <p><strong>Next lesson:</strong> you train a real neural network, delete its training data, and find out what it actually kept.</p>
+      <p>Want more? Play <a href="https://quickdraw.withgoogle.com" target="_blank" rel="noopener">Quick, Draw!</a> and test a machine that learned from millions of drawings.</p>
+      <p><strong>Like that?</strong> This is lesson 1 of 4. Tuition clients get the full course. <a href="mailto:hello@davidhaxton.co.uk?subject=Free%2015-minute%20call">Book a free 15-minute call →</a><!-- keep in sync with site BOOKING_URL --></p>
+    </div>
+    <div class="foot"><span>David Haxton &middot; davidhaxton.co.uk</span><span>Not Magic: how AI really works</span><span style="flex-basis:100%">© David Haxton 2026. All rights reserved. Not for reuse in schools or tuition without permission.</span></div>
+  </div>
+</footer>
+
+<script>
+(function(){
+"use strict";
+var reduce = window.matchMedia("(prefers-reduced-motion: reduce)").matches;
+var CSS = getComputedStyle(document.documentElement);
+function cv(n){ return CSS.getPropertyValue(n).trim(); }
+var INK = cv("--ink"), COBALT = cv("--cobalt"), CORAL = cv("--coral"), TEAL = cv("--teal"), LINE = cv("--line"), BG = cv("--bg"), PANEL = cv("--panel");
+function done(id){ document.getElementById("cp-"+id).classList.add("done"); }
+
+/* ---------- shared icon paths (viewBox 120x100) ---------- */
+function S(d){ return {t:"p", d:d}; }
+function C(x,y,r){ return {t:"c", x:x, y:y, r:r}; }
+function D(x,y,r){ return {t:"d", x:x, y:y, r:r||1.8}; }
+function E(x,y,rx,ry){ return {t:"e", x:x, y:y, rx:rx, ry:ry}; }
+var catHead = [S("M44 30 L48 14 L56 26"),S("M64 26 L72 14 L76 30"),C(60,34,17),S("M58 39 L62 39 L60 41 Z")];
+var whisk = S("M52 40 H38 M52 43 L39 47 M68 40 H82 M68 43 L81 47");
+var catBody = S("M47 49 C38 62 40 86 46 90 H74 C80 86 82 62 73 49");
+var ITEMS = [
+  {n:"Cat sitting up", cat:1, f:[1,1,1,1,1,1], g: catHead.concat([D(54,32),D(66,32),whisk,catBody,S("M54 72 V90 M66 72 V90"),S("M74 86 C92 88 98 70 90 60")])},
+  {n:"Cat seen from behind", cat:1, f:[0,1,1,1,1,0], g:[S("M47 22 L50 8 L56 18"),S("M64 18 L70 8 L73 22"),C(60,30,14),S("M48 42 C36 58 38 88 50 90 H70 C82 88 84 58 72 42"),S("M66 88 C84 84 92 60 84 42 C82 36 88 32 90 37"),S("M47 90 Q51 86 55 90 M63 90 Q67 86 71 90")]},
+  {n:"Cat asleep, curled up", cat:1, f:[0,1,1,0,1,0], g:[E(64,64,38,21),C(36,60,14),S("M26 51 L25 38 L33 47"),S("M39 47 L46 37 L48 50"),S("M29 60 Q32 63 35 60 M38 60 Q41 63 44 60"),S("M101 66 C100 88 62 92 44 74")]},
+  {n:"Hairless sphynx cat", cat:1, f:[0,1,1,1,0,1], g:[S("M43 30 L44 7 L57 24"),S("M63 24 L76 7 L77 30"),C(60,34,16),D(54,33),D(66,33),S("M58 39 L62 39 L60 41 Z"),S("M53 23 Q60 20 67 23 M55 27 Q60 25 65 27"),S("M50 50 C44 64 46 86 50 90 H70 C74 86 76 64 70 50"),S("M55 72 V90 M65 72 V90"),S("M70 88 C88 90 97 80 95 66")]},
+  {n:"Manx cat (born without a tail)", cat:1, f:[1,1,0,1,1,1], g: catHead.concat([D(54,32),D(66,32),whisk,catBody,S("M54 72 V90 M66 72 V90")])},
+  {n:"A child's drawing of a cat", cat:1, f:[1,1,0,0,0,1], g:[C(60,56,28),S("M38 38 L35 14 L53 29"),S("M67 29 L85 14 L82 38"),D(50,50,3),D(70,50,3),S("M57 58 L63 58 L60 62 Z"),S("M50 66 Q60 74 70 66"),S("M44 60 H20 M44 64 L22 71 M76 60 H100 M76 64 L98 71")]},
+  {n:"Fox", cat:0, f:[1,1,1,1,1,1], g:[S("M40 30 L43 13 L50 29"),S("M49 29 L56 15 L58 32"),S("M36 30 C30 34 22 44 12 50 C22 54 34 56 44 52 C54 48 60 38 56 30 C50 26 42 26 36 30Z"),D(40,38),D(12,50,2.2),S("M18 50 L8 46 M18 52 L8 57"),S("M52 50 C62 46 82 46 88 56 C92 66 86 76 80 78 H54 C46 70 46 58 52 50"),S("M57 76 V90 M65 77 V90 M78 77 V90 M84 75 V88"),S("M88 60 C104 50 117 62 113 78 C109 90 93 85 87 74")]},
+  {n:"Dog", cat:0, f:[1,0,1,1,1,1], g:[C(46,34,15),S("M34 26 C24 28 23 48 30 53"),S("M58 26 C68 28 69 48 62 53"),D(41,32),D(51,32),S("M40 41 Q46 49 52 41"),D(46,40,2.2),S("M42 45 L33 47 M50 45 L59 47"),S("M42 49 C36 60 38 86 44 90 H82 C90 86 92 66 84 56 C74 48 58 50 52 49"),S("M50 74 V90 M60 74 V90 M76 76 V90"),S("M86 58 C96 52 100 44 97 35")]},
+  {n:"Hare", cat:0, f:[1,1,1,1,1,1], g:[S("M40 34 C34 20 34 4 40 4 C46 4 46 20 44 32"),S("M50 33 C50 18 56 4 62 6 C66 8 60 22 54 35"),E(44,43,12,10),D(47,41),S("M34 46 L24 44 M34 48 L24 52"),S("M50 49 C70 38 96 48 96 68 C96 84 80 90 64 90 C52 90 44 80 46 66"),S("M84 88 C100 90 102 82 94 78 M52 88 V92 M58 88 V92"),C(99,64,5)]},
+  {n:"Seal", cat:0, f:[1,0,0,0,1,1], g:[S("M14 60 C14 46 34 40 50 50 C66 60 90 70 110 64 C104 76 80 82 60 80 C40 80 14 76 14 60Z"),D(27,52),D(15,58,2.2),S("M19 60 L6 56 M19 62 L6 67"),S("M50 78 L44 91 L58 84"),S("M110 64 L117 55 M110 64 L118 71")]},
+  {n:"Owl", cat:0, f:[0,1,0,0,0,1], g:[S("M60 18 C40 18 34 44 36 64 C38 84 50 92 60 92 C70 92 82 84 84 64 C86 44 80 18 60 18Z"),S("M46 24 L42 9 L54 20"),S("M66 20 L78 9 L74 24"),C(50,40,9),C(70,40,9),D(50,40,2.6),D(70,40,2.6),S("M57 48 L60 56 L63 48"),S("M41 52 C46 64 48 76 46 82 M79 52 C74 64 72 76 74 82"),S("M52 66 L56 70 L60 66 M60 73 L64 77 L68 73")]}
+];
+function svgOf(g){
+  return g.map(function(o){
+    if(o.t==="p") return '<path class="s" d="'+o.d+'"/>';
+    if(o.t==="c") return '<circle class="s" cx="'+o.x+'" cy="'+o.y+'" r="'+o.r+'"/>';
+    if(o.t==="e") return '<ellipse class="s" cx="'+o.x+'" cy="'+o.y+'" rx="'+o.rx+'" ry="'+o.ry+'"/>';
+    return '<circle class="f" cx="'+o.x+'" cy="'+o.y+'" r="'+o.r+'"/>';
+  }).join("");
+}
+function paintIcon(c2, g, scale, ox, oy, lw){
+  c2.save(); c2.translate(ox,oy); c2.scale(scale,scale);
+  c2.lineCap="round"; c2.lineJoin="round"; c2.lineWidth=lw; c2.strokeStyle="#000"; c2.fillStyle="#000";
+  g.forEach(function(o){
+    c2.beginPath();
+    if(o.t==="p"){ c2.stroke(new Path2D(o.d)); return; }
+    if(o.t==="c"){ c2.arc(o.x,o.y,o.r,0,Math.PI*2); c2.stroke(); return; }
+    if(o.t==="e"){ c2.ellipse(o.x,o.y,o.rx,o.ry,0,0,Math.PI*2); c2.stroke(); return; }
+    c2.arc(o.x,o.y,o.r*1.4,0,Math.PI*2); c2.fill();
+  });
+  c2.restore();
+}
+
+/* ---------- hero: the cat as numbers ---------- */
+(function(){
+  var N=24, src=document.createElement("canvas"); src.width=src.height=N*4;
+  var sx=src.getContext("2d",{willReadFrequently:true});
+  var hs=(N*4)/92; paintIcon(sx, ITEMS[0].g, hs, N*2-70*hs, N*2-51*hs, 3.4);
+  var d=sx.getImageData(0,0,N*4,N*4).data, vals=[];
+  for(var y=0;y<N;y++) for(var x=0;x<N;x++){
+    var s=0; for(var yy=0;yy<4;yy++) for(var xx=0;xx<4;xx++) s+=d[((y*4+yy)*N*4+(x*4+xx))*4+3];
+    vals.push(Math.min(1, s/(16*255)*1.6));
+  }
+  var cvs=document.getElementById("heroGrid"), c=cvs.getContext("2d"), shown=0, hover=-1;
+  function size(){ var r=cvs.getBoundingClientRect(), dpr=window.devicePixelRatio||1; cvs.width=r.width*dpr; cvs.height=r.width*dpr; c.setTransform(dpr,0,0,dpr,0,0); paint(); }
+  function paint(){
+    var w=cvs.getBoundingClientRect().width, cell=w/N, gap=Math.max(1,cell*.12);
+    c.clearRect(0,0,w,w);
+    for(var i=0;i<N*N;i++){
+      var x=i%N, y=Math.floor(i/N), v=vals[i];
+      if(i>=shown){ c.fillStyle=PANEL; }
+      else c.fillStyle = v<.02 ? "#eceef3" : "rgba(59,91,253,"+(0.15+0.85*v).toFixed(3)+")";
+      var r=cell*.18;
+      c.beginPath(); c.roundRect(x*cell+gap/2, y*cell+gap/2, cell-gap, cell-gap, r); c.fill();
+      if(i===hover){ c.strokeStyle=CORAL; c.lineWidth=2; c.stroke(); }
+    }
+  }
+  cvs.addEventListener("pointermove", function(e){
+    var r=cvs.getBoundingClientRect(), cell=r.width/N, x=Math.floor((e.clientX-r.left)/cell), y=Math.floor((e.clientY-r.top)/cell);
+    if(x<0||y<0||x>=N||y>=N) return;
+    hover=y*N+x; document.getElementById("heroVal").textContent=vals[hover].toFixed(2); paint();
+  });
+  cvs.addEventListener("pointerleave", function(){ hover=-1; paint(); });
+  window.addEventListener("resize", size);
+  size();
+  if(reduce){ shown=N*N; paint(); }
+  else { var t0=null; requestAnimationFrame(function step(t){ if(!t0) t0=t; shown=Math.min(N*N, Math.floor((t-t0)/1100*N*N)); paint(); if(shown<N*N) requestAnimationFrame(step); }); }
+})();
+
+/* ---------- Rule Machine ---------- */
+var RULES = [
+  {k:"whiskers", t:"Whiskers", lab:"Whiskers"},
+  {k:"pointedEars", t:"Pointed ears", lab:"Pointed ears"},
+  {k:"tail", t:"A tail", lab:"Tail"},
+  {k:"fourLegs", t:"Four visible legs", lab:"Four legs"},
+  {k:"fur", t:"Fur", lab:"Fur"},
+  {k:"twoEyes", t:"Two visible eyes", lab:"Two eyes"}
+];
+var ruleOn=[false,false,false,false,false,false], tried={}, bestScore=0, revealed=false;
+function predict(f,m){ for(var k=0;k<6;k++) if(m[k] && !f[k]) return false; return true; }
+function scoreOf(m){ var s=0; ITEMS.forEach(function(it){ if(predict(it.f,m)===!!it.cat) s++; }); return s; }
+var allScores=[];
+for(var m=0;m<64;m++){ var mk=[]; for(var b=0;b<6;b++) mk.push(!!(m>>b&1)); allScores.push(scoreOf(mk)); }
+bestScore=Math.max.apply(null,allScores);
+var ruleList=document.getElementById("ruleList");
+RULES.forEach(function(r,i){
+  var b=document.createElement("button"); b.className="rule"; b.setAttribute("aria-pressed","false");
+  b.innerHTML='<span>'+r.t+'</span><span class="sw"></span>';
+  b.addEventListener("click", function(){ ruleOn[i]=!ruleOn[i]; b.setAttribute("aria-pressed",String(ruleOn[i])); updateRules(); });
+  ruleList.appendChild(b);
+});
+var fm=document.getElementById("fm");
+(function(){
+  var h='<thead><tr><th style="text-align:left;padding-left:14px">Photo</th>';
+  RULES.forEach(function(r,i){ h+='<th data-c="'+i+'">'+r.lab+'</th>'; });
+  h+='<th>Really</th><th>Machine says</th><th></th></tr></thead><tbody>';
+  ITEMS.forEach(function(it,i){
+    h+='<tr id="r'+i+'"'+((i===0||i===6||i===8)?' class="twin"':'')+'><td class="item"><div class="in"><svg class="ic" viewBox="0 0 120 100" aria-hidden="true">'+svgOf(it.g)+'</svg><span>'+it.n+'</span></div></td>';
+    it.f.forEach(function(v,k){ h+='<td data-c="'+k+'">'+(v?'<span class="dot" title="yes"></span>':'<span class="no" title="no"></span>')+'</td>'; });
+    h+='<td class="truth">'+(it.cat?"Cat":"Not a cat")+'</td><td class="say"></td><td class="res"></td></tr>';
+  });
+  fm.innerHTML=h+'</tbody>';
+  document.querySelectorAll("#fm tr.twin").forEach(function(r){ r.classList.remove("twin"); r.dataset.twin="1"; });
+})();
+var heat=document.getElementById("heat");
+allScores.forEach(function(s,i){
+  var d=document.createElement("div");
+  var lo=Math.min.apply(null,allScores), t=(s-lo)/((bestScore-lo)||1); d.style.background="color-mix(in srgb,"+COBALT+" "+Math.round(8+t*92)+"%,"+PANEL+")";
+  var names=RULES.filter(function(r,b){ return i>>b&1; }).map(function(r){ return r.k; });
+  d.title=(names.length?names.join(" and "):"no rules")+": "+s+" correct";
+  if(s===bestScore) d.classList.add("best");
+  d.style.cursor="pointer";
+  d.addEventListener("click",function(){ for(var b=0;b<6;b++){ ruleOn[b]=!!(i>>b&1); ruleList.children[b].setAttribute("aria-pressed",String(ruleOn[b])); } updateRules(); });
+  heat.appendChild(d);
+});
+function maskIndex(){ var m=0; ruleOn.forEach(function(v,b){ if(v) m|=1<<b; }); return m; }
+function updateRules(){
+  var names=RULES.filter(function(r,i){ return ruleOn[i]; }).map(function(r){ return '<span class="v">'+r.k+'</span>'; });
+  document.getElementById("expr").innerHTML='<span class="v">isCat</span> = '+(names.length? names.join(' <span class="kw">and</span> ') : '<span class="kw">True</span>');
+  document.querySelectorAll("#fm [data-c]").forEach(function(el){ el.classList.toggle("on", ruleOn[+el.dataset.c]); });
+  var score=0;
+  ITEMS.forEach(function(it,i){
+    var p=predict(it.f,ruleOn), ok=p===!!it.cat, row=document.getElementById("r"+i);
+    if(ok) score++;
+    row.querySelector(".say").textContent=p?"Cat":"Not a cat";
+    var r=row.querySelector(".res"); r.textContent=ok?"\u2713":"\u2717"; r.className="res "+(ok?"ok":"bad");
+    row.classList.toggle("wrong",!ok);
+  });
+  document.getElementById("score").textContent=score;
+  var mi=maskIndex(); if(mi!==0) tried[mi]=1;
+  var n=Object.keys(tried).length;
+  document.getElementById("tried").textContent = n<3 ? "Rules tried: "+n+" of 3" : "Rules tried: "+n;
+  [].forEach.call(heat.children,function(d,i){ d.classList.toggle("you", i===mi); });
+  if(!revealed && (n>=3 || score===bestScore)){
+    revealed=true; document.getElementById("reveal").classList.add("on");
+    document.querySelectorAll("#fm tr[data-twin]").forEach(function(r){ r.classList.add("twin"); });
+    document.getElementById("bestNum").textContent=bestScore+" / 11"; document.getElementById("hiLab").textContent=bestScore+" correct"; document.getElementById("loLab").textContent=Math.min.apply(null,allScores)+" correct";
+    done("rules");
+  }
+}
+updateRules();
+
+/* ---------- Learning Machine ---------- */
+var CLASSES=[{n:"Cat face",c:COBALT},{n:"Fish",c:CORAL},{n:"Star",c:TEAL}];
+var NEED=4, examples=[[],[],[]], cur=0, mode="teach";
+var pad=document.getElementById("pad"), ctx=pad.getContext("2d"), strokes=[], drawing=false, lastP=0;
+function sizePad(){ var r=pad.getBoundingClientRect(), dpr=window.devicePixelRatio||1; pad.width=Math.round(r.width*dpr); pad.height=Math.round(r.width*dpr); ctx.setTransform(dpr,0,0,dpr,0,0); redraw(); }
+function redraw(){
+  var w=pad.getBoundingClientRect().width; ctx.clearRect(0,0,w,w);
+  ctx.lineCap="round"; ctx.lineJoin="round"; ctx.lineWidth=Math.max(4,w/62); ctx.strokeStyle=INK;
+  strokes.forEach(function(s){ ctx.beginPath(); s.forEach(function(p,j){ if(j===0) ctx.moveTo(p[0],p[1]); else ctx.lineTo(p[0],p[1]); }); if(s.length===1) ctx.lineTo(s[0][0]+.1,s[0][1]); ctx.stroke(); });
+}
+function pos(e){ var r=pad.getBoundingClientRect(); return [e.clientX-r.left,e.clientY-r.top]; }
+pad.addEventListener("pointerdown",function(e){ e.preventDefault(); pad.setPointerCapture(e.pointerId); drawing=true; strokes.push([pos(e)]); redraw(); });
+pad.addEventListener("pointermove",function(e){ if(!drawing) return; strokes[strokes.length-1].push(pos(e)); redraw(); if(mode==="test" && Date.now()-lastP>120){ lastP=Date.now(); predictNow(false); } });
+function endS(){ if(!drawing) return; drawing=false; if(mode==="test") predictNow(true); }
+pad.addEventListener("pointerup",endS); pad.addEventListener("pointercancel",endS);
+
+var G=28, off=document.createElement("canvas"); off.width=off.height=G;
+var octx=off.getContext("2d",{willReadFrequently:true});
+function bounds(sk){ var a=Infinity,b=-Infinity,c=Infinity,d=-Infinity; sk.forEach(function(s){ s.forEach(function(p){ if(p[0]<a)a=p[0]; if(p[0]>b)b=p[0]; if(p[1]<c)c=p[1]; if(p[1]>d)d=p[1]; }); }); return {x:a,y:c,w:Math.max(b-a,1),h:Math.max(d-c,1)}; }
+function strokeInto(c2, sk, box, size, inner, lw, col){
+  var sc=inner/Math.max(box.w,box.h), ox=(size-box.w*sc)/2, oy=(size-box.h*sc)/2;
+  c2.lineCap="round"; c2.lineJoin="round"; c2.lineWidth=lw; c2.strokeStyle=col;
+  sk.forEach(function(s){ c2.beginPath(); s.forEach(function(p,j){ var x=ox+(p[0]-box.x)*sc, y=oy+(p[1]-box.y)*sc; if(j===0) c2.moveTo(x,y); else c2.lineTo(x,y); }); if(s.length===1) c2.lineTo(ox+(s[0][0]-box.x)*sc+.1, oy+(s[0][1]-box.y)*sc); c2.stroke(); });
+}
+function blur(v){ var o=new Float32Array(G*G); for(var y=0;y<G;y++) for(var x=0;x<G;x++){ var s=0,c=0; for(var dy=-1;dy<=1;dy++) for(var dx=-1;dx<=1;dx++){ var xx=x+dx,yy=y+dy; if(xx<0||yy<0||xx>=G||yy>=G) continue; s+=v[yy*G+xx]; c++; } o[y*G+x]=s/c; } return o; }
+function featurize(sk){
+  octx.clearRect(0,0,G,G); strokeInto(octx, sk, bounds(sk), G, 20, 2.4, "#000");
+  var d=octx.getImageData(0,0,G,G).data, v=new Float32Array(G*G);
+  for(var i=0;i<G*G;i++) v[i]=d[i*4+3]/255;
+  var pix=new Float32Array(v), raw=blur(blur(v)), n=0; for(i=0;i<raw.length;i++) n+=raw[i]*raw[i]; n=Math.sqrt(n)||1;
+  var u=new Float32Array(G*G); for(i=0;i<raw.length;i++) u[i]=raw[i]/n;
+  return {u:u, raw:pix};
+}
+function dist(a,b){ var s=0; for(var i=0;i<a.length;i++){ var d=a[i]-b[i]; s+=d*d; } return Math.sqrt(s); }
+function thumb(sk,col){ var c=document.createElement("canvas"), dpr=window.devicePixelRatio||1, S=46; c.width=c.height=S*dpr; var x=c.getContext("2d"); x.scale(dpr,dpr); strokeInto(x,sk,bounds(sk),S,32,1.8,col||INK); return c; }
+
+var shelvesEl=document.getElementById("shelves");
+var shelfEls=CLASSES.map(function(cl,i){
+  var b=document.createElement("button"); b.className="shelf"; b.style.setProperty("--c",cl.c);
+  b.innerHTML='<div class="top"><span class="sw2"></span><span class="nm">'+cl.n+'</span><span class="ct"></span></div><div class="thumbs"></div>';
+  b.addEventListener("click",function(){ if(mode!=="teach") return; cur=i; renderShelves(); });
+  shelvesEl.appendChild(b); return b;
+});
+function total(){ return examples.reduce(function(a,b){ return a+b.length; },0); }
+function renderShelves(){
+  shelfEls.forEach(function(b,i){
+    b.setAttribute("aria-pressed",String(mode==="teach"&&i===cur));
+    var n=examples[i].length; b.querySelector(".ct").textContent = mode==="teach" ? Math.min(n,NEED)+"/"+NEED+(n>NEED?" +"+(n-NEED):"") : n+" examples";
+    var t=b.querySelector(".thumbs"); t.innerHTML="";
+    examples[i].forEach(function(ex){ ex.el=thumb(ex.s); t.appendChild(ex.el); });
+    if(mode==="teach") for(var k=n;k<NEED;k++){ var e=document.createElement("span"); e.className="empty"; t.appendChild(e); }
+  });
+  if(mode==="teach"){
+    document.getElementById("padPrompt").innerHTML="Draw a "+CLASSES[cur].n.toLowerCase()+" <span>"+Math.min(examples[cur].length+1,NEED)+" of "+NEED+"</span>";
+    document.getElementById("trainBtn").disabled=!examples.every(function(a){ return a.length>=NEED; });
+  }
+}
+function pts(){ return strokes.reduce(function(a,s){ return a+s.length; },0); }
+var statusEl=document.getElementById("status");
+document.getElementById("clearPad").addEventListener("click",function(){ strokes=[]; redraw(); if(mode==="test") resetTest(); });
+document.getElementById("addEx").addEventListener("click",function(){
+  if(pts()<4){ statusEl.textContent="Draw something first."; return; }
+  var f=featurize(strokes); examples[cur].push({s:strokes,v:f.u}); strokes=[]; redraw();
+  if(examples[cur].length>=NEED){ var nx=examples.findIndex(function(a){ return a.length<NEED; }); if(nx>=0) cur=nx; }
+  renderShelves(); statusEl.textContent="Examples: "+total()+". Rules: 0.";
+});
+document.getElementById("trainBtn").addEventListener("click",function(){
+  var btn=this; btn.disabled=true; statusEl.textContent="Training on "+total()+" examples...";
+  shelfEls.forEach(function(b,i){ setTimeout(function(){ b.classList.remove("scan"); void b.offsetWidth; b.classList.add("scan"); }, reduce?0:i*380); });
+  setTimeout(function(){
+    mode="test"; btn.style.display="none"; document.getElementById("addEx").style.display="none";
+    document.getElementById("padPrompt").innerHTML="Test: draw something new <span>trained</span>";
+    statusEl.textContent="Trained on "+total()+" examples. Rules written: 0.";
+    renderShelves(); fitMap();
+    document.getElementById("tester").classList.add("on"); document.getElementById("mapcard").classList.add("on"); document.getElementById("challenges").classList.add("on");
+    sizeMap(); drawMap(null,[]); drawMV(null);
+  }, reduce?0:1300);
+});
+
+/* PCA for the map */
+var P=null;
+function fitMap(){
+  var all=[]; examples.forEach(function(a,ci){ a.forEach(function(ex){ all.push(ex.v); }); });
+  var n=all.length, d=G*G, mean=new Float32Array(d);
+  all.forEach(function(v){ for(var i=0;i<d;i++) mean[i]+=v[i]/n; });
+  var X=all.map(function(v){ var o=new Float32Array(d); for(var i=0;i<d;i++) o[i]=v[i]-mean[i]; return o; });
+  var K=[]; for(var a=0;a<n;a++){ K.push([]); for(var b=0;b<n;b++){ var s=0; for(var i=0;i<d;i++) s+=X[a][i]*X[b][i]; K[a].push(s); } }
+  function power(M){ var u=[]; for(var i=0;i<n;i++) u.push(Math.sin(i+1)+1.3); for(var it=0;it<200;it++){ var w=M.map(function(r){ return r.reduce(function(s,x,j){ return s+x*u[j]; },0); }); var nn=Math.sqrt(w.reduce(function(s,x){ return s+x*x; },0))||1; u=w.map(function(x){ return x/nn; }); } var lam=0; for(var i=0;i<n;i++) for(var j=0;j<n;j++) lam+=u[i]*M[i][j]*u[j]; return {u:u,l:Math.max(lam,1e-9)}; }
+  var e1=power(K), K2=K.map(function(r,i){ return r.map(function(x,j){ return x-e1.l*e1.u[i]*e1.u[j]; }); }), e2=power(K2);
+  function comp(e){ var c=new Float32Array(d), s=1/Math.sqrt(e.l); for(var k=0;k<n;k++) for(var i=0;i<d;i++) c[i]+=e.u[k]*X[k][i]*s; return c; }
+  P={mean:mean,c1:comp(e1),c2:comp(e2)};
+  examples.forEach(function(a){ a.forEach(function(ex){ ex.p=proj(ex.v); }); });
+}
+function proj(v){ var x=0,y=0; for(var i=0;i<v.length;i++){ var z=v[i]-P.mean[i]; x+=z*P.c1[i]; y+=z*P.c2[i]; } return [x,y]; }
+var map=document.getElementById("map"), mctx=map.getContext("2d");
+function sizeMap(){ var r=map.getBoundingClientRect(), dpr=window.devicePixelRatio||1; map.width=r.width*dpr; map.height=r.height*dpr; mctx.setTransform(dpr,0,0,dpr,0,0); }
+var lastMap={p:null,near:[]};
+function drawMap(tp,near){
+  lastMap={p:tp,near:near};
+  var W=map.getBoundingClientRect().width, H=map.getBoundingClientRect().height, pad2=36;
+  mctx.clearRect(0,0,W,H);
+  var ps=[]; examples.forEach(function(a){ a.forEach(function(ex){ ps.push(ex.p); }); }); if(tp) ps.push(tp);
+  var xs=ps.map(function(p){ return p[0]; }), ys=ps.map(function(p){ return p[1]; });
+  var x0=Math.min.apply(null,xs), x1=Math.max.apply(null,xs), y0=Math.min.apply(null,ys), y1=Math.max.apply(null,ys);
+  function X(v){ return pad2+(v-x0)/((x1-x0)||1)*(W-2*pad2); } function Y(v){ return pad2+(v-y0)/((y1-y0)||1)*(H-2*pad2); }
+  mctx.strokeStyle=LINE; mctx.lineWidth=1;
+  for(var g=0;g<=8;g++){ var gx=g/8*W; mctx.beginPath(); mctx.moveTo(gx,0); mctx.lineTo(gx,H); mctx.stroke(); }
+  for(g=0;g<=4;g++){ var gy=g/4*H; mctx.beginPath(); mctx.moveTo(0,gy); mctx.lineTo(W,gy); mctx.stroke(); }
+  if(tp){
+    mctx.strokeStyle=CORAL; mctx.lineWidth=1.5; mctx.setLineDash([5,4]);
+    near.forEach(function(ex){ mctx.beginPath(); mctx.moveTo(X(tp[0]),Y(tp[1])); mctx.lineTo(X(ex.p[0]),Y(ex.p[1])); mctx.stroke(); });
+    mctx.setLineDash([]);
+  }
+  var S=34;
+  examples.forEach(function(a,ci){ a.forEach(function(ex){
+    var cx=X(ex.p[0]), cy=Y(ex.p[1]);
+    mctx.fillStyle="#fff"; mctx.strokeStyle=CLASSES[ci].c; mctx.lineWidth=near.indexOf(ex)>=0?3:1.6;
+    mctx.beginPath(); mctx.roundRect(cx-S/2,cy-S/2,S,S,7); mctx.fill(); mctx.stroke();
+    mctx.save(); mctx.translate(cx-S/2,cy-S/2); strokeInto(mctx,ex.s,bounds(ex.s),S,24,1.4,CLASSES[ci].c); mctx.restore();
+  }); });
+  if(tp){
+    var tx=X(tp[0]), ty=Y(tp[1]);
+    mctx.fillStyle=INK; mctx.beginPath(); mctx.arc(tx,ty,7,0,Math.PI*2); mctx.fill();
+    mctx.strokeStyle=INK; mctx.lineWidth=1.5; mctx.beginPath(); mctx.arc(tx,ty,13,0,Math.PI*2); mctx.stroke();
+    mctx.fillStyle=INK; mctx.font="600 13px "+cv("--sans"); var lw2=mctx.measureText("Your drawing").width; mctx.fillText("Your drawing", tx+18+lw2>W ? tx-18-lw2 : tx+18, ty<24 ? ty+28 : ty-14);
+  }
+}
+var keys=document.getElementById("keys"); CLASSES.forEach(function(cl){ var s=document.createElement("span"); s.style.setProperty("--c",cl.c); s.innerHTML="<i></i>"+cl.n; keys.appendChild(s); });
+var mv=document.getElementById("mv"), mvx=mv.getContext("2d");
+(function(){ var dpr=window.devicePixelRatio||1; mv.width=150*dpr; mv.height=150*dpr; mvx.scale(dpr,dpr); })();
+function drawMV(raw){
+  mvx.clearRect(0,0,150,150); var cell=150/G, mx=0;
+  if(raw) for(var i=0;i<raw.length;i++) if(raw[i]>mx) mx=raw[i];
+  for(var y=0;y<G;y++) for(var x=0;x<G;x++){
+    var v=raw && mx ? raw[y*G+x]/mx : 0;
+    mvx.fillStyle = v<.03 ? "#eceef3" : "rgba(29,36,51,"+(0.12+0.88*v).toFixed(3)+")";
+    mvx.fillRect(x*cell+.4,y*cell+.4,cell-.8,cell-.8);
+  }
+}
+var tests=0;
+function resetTest(){ document.getElementById("guessline").textContent="Draw something new."; document.getElementById("bars").innerHTML=""; document.getElementById("fixrow").innerHTML=""; drawMV(null); drawMap(null,[]); clearHits(); }
+function clearHits(){ document.querySelectorAll(".thumbs canvas.hit").forEach(function(c){ c.classList.remove("hit"); }); }
+function predictNow(final){
+  if(pts()<6) return;
+  var f=featurize(strokes), all=[];
+  examples.forEach(function(a,ci){ a.forEach(function(ex){ all.push({c:ci,d:dist(f.u,ex.v),ex:ex}); }); });
+  all.sort(function(a,b){ return a.d-b.d; });
+  var near=[9,9,9]; all.forEach(function(a){ if(a.d<near[a.c]) near[a.c]=a.d; });
+  var sc=near.map(function(d){ return Math.exp(-d/0.12); }), sum=sc[0]+sc[1]+sc[2]||1;
+  var pct=sc.map(function(s){ return Math.round(100*s/sum); }), top=pct.indexOf(Math.max.apply(null,pct));
+  var bars=document.getElementById("bars"); bars.innerHTML="";
+  CLASSES.forEach(function(cl,i){
+    var r=document.createElement("div"); r.className="bar"; r.style.setProperty("--c",cl.c);
+    r.innerHTML='<b>'+cl.n+'</b><div class="track"><div class="fill" style="width:'+pct[i]+'%"></div></div><span>'+pct[i]+'%</span>';
+    bars.appendChild(r);
+  });
+  document.getElementById("guessline").textContent="Closest match: "+CLASSES[top].n.toLowerCase();
+  clearHits(); var k=all.slice(0,3); k.forEach(function(a){ if(a.ex.el) a.ex.el.classList.add("hit"); });
+  drawMV(f.raw); drawMap(proj(f.u), k.map(function(a){ return a.ex; }));
+  if(final){
+    tests++; if(tests>=3) done("learn");
+    var fr=document.getElementById("fixrow"); fr.innerHTML="<span>Wrong? Teach it the answer:</span>";
+    CLASSES.forEach(function(cl,i){
+      var b=document.createElement("button"); b.className="btn ghost sm"; b.textContent=cl.n;
+      b.addEventListener("click",function(){
+        var ff=featurize(strokes); examples[i].push({s:strokes,v:ff.u}); strokes=[]; redraw();
+        fitMap(); renderShelves(); resetTest();
+        statusEl.textContent="Added one more "+cl.n.toLowerCase()+". Examples: "+total()+". Rules: still 0.";
+      });
+      fr.appendChild(b);
+    });
+  }
+}
+window.addEventListener("resize",function(){ sizePad(); if(mode==="test"){ sizeMap(); drawMap(lastMap.p,lastMap.near); } });
+sizePad(); renderShelves();
+
+/* ---------- Sort ---------- */
+var CARDS=[
+  {t:"Calculator",a:"rules",w:"Follows rules. Every sum uses rules of arithmetic that a programmer wrote."},
+  {t:"Spam filter",a:"learn",w:"Learned. Trained on millions of emails that people had marked as spam."},
+  {t:"Face unlock",a:"learn",w:"Learned. It learned what faces look like from huge numbers of example faces."},
+  {t:"Traffic light timer",a:"rules",w:"Follows rules. It changes after a set time, or when a sensor is triggered."},
+  {t:"Video recommendation feed",a:"learn",w:"Learned. It finds patterns in what millions of people watched and skipped."},
+  {t:"Spelling checker",a:"either",w:"Either is fair. Older ones check each word against a word list, which is a rule. Newer ones learn from examples of real writing."},
+  {t:"Thermostat",a:"rules",w:"Follows rules. If the room is colder than the setting, turn the heating on."},
+  {t:"Voice assistant",a:"learn",w:"Learned. It learned to understand speech from thousands of hours of recorded voices."}
+];
+var deck=document.getElementById("deck"), binR=document.getElementById("binRules"), binL=document.getElementById("binLearn"), selected=null, sorted=false;
+function inside(b,e){ var r=b.getBoundingClientRect(); return e.clientX>=r.left&&e.clientX<=r.right&&e.clientY>=r.top&&e.clientY<=r.bottom; }
+function place(el,bin){ bin.querySelector(".slot").appendChild(el); el.classList.remove("sel"); selected=null; document.getElementById("checkSort").disabled=deck.children.length>0; }
+CARDS.slice().sort(function(){ return Math.random()-.5; }).forEach(function(c){
+  var el=document.createElement("button"); el.className="card"; el.dataset.a=c.a;
+  el.innerHTML='<span class="mk"></span>'+c.t+'<span class="why">'+c.w+'</span>';
+  deck.appendChild(el);
+  var sx,sy,moved=false,dragging=false;
+  el.addEventListener("pointerdown",function(e){ if(sorted) return; sx=e.clientX; sy=e.clientY; moved=false; dragging=true; el.setPointerCapture(e.pointerId); });
+  el.addEventListener("pointermove",function(e){ if(!dragging) return; var dx=e.clientX-sx, dy=e.clientY-sy; if(!moved&&Math.hypot(dx,dy)>6){ moved=true; el.classList.add("drag"); } if(moved){ el.style.transform="translate("+dx+"px,"+dy+"px) rotate(-2deg)"; [binR,binL].forEach(function(b){ b.classList.toggle("over",inside(b,e)); }); } });
+  el.addEventListener("pointerup",function(e){ if(!dragging) return; dragging=false; el.classList.remove("drag"); el.style.transform=""; [binR,binL].forEach(function(b){ b.classList.remove("over"); }); if(moved){ if(inside(binR,e)) place(el,binR); else if(inside(binL,e)) place(el,binL); } });
+  el.addEventListener("click",function(){ if(sorted||moved){ moved=false; return; } if(selected===el){ el.classList.remove("sel"); selected=null; return; } if(selected) selected.classList.remove("sel"); selected=el; el.classList.add("sel"); });
+});
+[binR,binL].forEach(function(b){ function go(){ if(selected&&!sorted) place(selected,b); } b.addEventListener("click",function(e){ if(e.target.closest(".card")) return; go(); }); b.addEventListener("keydown",function(e){ if(e.key==="Enter"||e.key===" "){ e.preventDefault(); go(); } }); });
+document.getElementById("checkSort").addEventListener("click",function(){
+  sorted=true; this.disabled=true; var ok=0;
+  [[binR,"rules"],[binL,"learn"]].forEach(function(pr){ pr[0].querySelectorAll(".card").forEach(function(c){ var r=c.dataset.a===pr[1]||c.dataset.a==="either"; if(r) ok++; c.classList.add("checked",r?"ok":"bad"); c.querySelector(".mk").textContent=r?"\u2713":"\u2717"; }); });
+  document.getElementById("sortScore").innerHTML="<strong>"+ok+" out of 8.</strong> Read the reason on each card, especially any outlined in pink.";
+  done("sort");
+});
+
+/* ---------- Exit ---------- */
+var choice=null, why=document.getElementById("why"), rv=document.getElementById("reveal2");
+document.querySelectorAll(".opt").forEach(function(b){ b.addEventListener("click",function(){ choice=b.dataset.v; document.querySelectorAll(".opt").forEach(function(o){ o.setAttribute("aria-pressed",String(o===b)); }); chk(); }); });
+function chk(){ rv.disabled=!(choice&&why.value.trim().length>=15); }
+why.addEventListener("input",chk);
+rv.addEventListener("click",function(){
+  var m=document.getElementById("model");
+  m.innerHTML=(choice==="learn"?"<strong>Correct.</strong> ":"<strong>Not quite.</strong> ")+"It learns from examples. Nobody wrote a rule for every kind of spam. The filter found the patterns in 10,000 emails that people had already labelled, just as your Learning Machine found the patterns in your drawings. Did your reason mention the labelled examples?";
+  m.classList.add("on"); done("exit");
+});
+})();
+</script>
+<script>window.NM_NAV={"tasks": {"rules": "Switch rules on and off and watch the table and the score. Try at least three different rules.", "learn": "Draw each shape four times, press Train, then test it with new drawings. Then try to break it.", "sort": "Put all eight cards into a box, press Check my sort, and read the reason on any you got wrong.", "exit": "Choose an answer if there is one, write your reason in the box, then reveal the model answer."}};</script>
+<script>(function(){
+"use strict";
+var CFG=window.NM_NAV||{tasks:{}};
+var reduce=window.matchMedia("(prefers-reduced-motion: reduce)").matches;
+var rail=document.querySelector(".rail"), steps=[].slice.call(rail.querySelectorAll(".steps li"));
+var main=document.querySelector("main"), hero=document.querySelector("header.hero"), finale=document.querySelector("footer.finale");
+var linked={}; steps.forEach(function(li){ linked[li.querySelector("a").getAttribute("href").slice(1)]=1; });
+var orphans=[]; (function(){ var kids=[].slice.call(main.children); kids.forEach(function(c,k){ if(linked[c.id]) return; var hasLinked=false; for(var id in linked){ if(c.querySelector("#"+CSS.escape(id))) hasLinked=true; } if(hasLinked) return; for(var m=k+1;m<kids.length;m++){ if(linked[kids[m].id]){ orphans.push({el:c,key:kids[m].id}); return; } } }); })();
+var host=document.createElement("div"); main.parentNode.insertBefore(host,main);
+var screens=[];
+function mk(key,label,cpId){ var s=document.createElement("div"); s.className="screen"; s.dataset.key=key; host.appendChild(s); screens.push({key:key,label:label,cp:cpId,el:s}); return s; }
+var start=mk("start","Start",null); start.appendChild(hero);
+steps.forEach(function(li){
+  var a=li.querySelector("a"), id=a.getAttribute("href").slice(1), label=(li.querySelector("span")||a).textContent.trim();
+  var t=document.getElementById(id), s=mk(id,label,li.id);
+  if(!t) return;
+  var parent=t.parentElement.closest("section");
+  if(t.tagName!=="SECTION" && parent){
+    var wrap=parent.querySelector(":scope > .wrap")||parent;
+    if(!parent.dataset.moved){ parent.dataset.moved="1"; var intro=document.createElement("section"); intro.className="part"; intro.style.paddingBottom="0"; var w=document.createElement("div"); w.className="wrap"; [].slice.call(wrap.children).forEach(function(c){ if(c.querySelector&&!c.contains(t)&&c!==t&&!c.querySelector("article")&&c.tagName!=="ARTICLE"&&c.id!=="caseHost") w.appendChild(c); }); intro.appendChild(w); s.appendChild(intro); }
+    var sec=document.createElement("section"); sec.className="part"; sec.style.paddingTop=s.children.length?"0":"40px"; var w2=document.createElement("div"); w2.className="wrap"; w2.appendChild(t); sec.appendChild(w2); s.appendChild(sec);
+  } else { s.appendChild(t); }
+});
+/* sections not linked from the rail (eg a lesson break) join the screen that follows them */
+orphans.forEach(function(o){ screens.forEach(function(sc){ if(sc.key===o.key) sc.el.insertBefore(o.el,sc.el.firstChild); }); });
+/* anything left over (eg L3 empty case container) */
+[].slice.call(main.querySelectorAll("section")).forEach(function(sct){ if(!sct.textContent.trim()) sct.remove(); });
+if(!main.children.length) main.remove(); else screens[screens.length-1].el.appendChild(main);
+screens[screens.length-1].el.appendChild(finale);
+/* task boxes */
+screens.forEach(function(sc){
+  var txt=CFG.tasks[sc.key]; if(!txt) return;
+  var box=document.createElement("div"); box.className="task"; box.innerHTML="<b>Your task</b><span>"+txt+"</span>";
+  var prose=sc.el.querySelector(".prose");
+  if(prose) prose.parentNode.insertBefore(box, prose.nextSibling);
+  else { var w=sc.el.querySelector(".wrap"); if(w) w.insertBefore(box,w.firstChild); }
+});
+/* tabs */
+var tabsBox=document.createElement("div"); tabsBox.className="navtabs"; tabsBox.setAttribute("role","tablist");
+var oldOl=rail.querySelector(".steps"); oldOl.parentNode.replaceChild(tabsBox,oldOl);
+screens.forEach(function(sc,i){
+  var b=document.createElement("button"); b.className="tab"; b.setAttribute("role","tab"); b.setAttribute("aria-selected","false");
+  if(sc.cp){ b.id=sc.cp; }
+  b.innerHTML='<span class="num">'+(i===0?"&#9656;":i)+'</span><span class="lbl">'+sc.label+'</span>';
+  b.addEventListener("click",function(){ go(i); });
+  tabsBox.appendChild(b); sc.tab=b;
+});
+/* Back and Next */
+screens.forEach(function(sc,i){
+  var row=document.createElement("div"); row.className="navrow wrap";
+  var back=i>0?'<button class="btn ghost" data-go="'+(i-1)+'">Back</button>':'<span></span>';
+  var nextLabel=i<screens.length-1?"Next: "+screens[i+1].label:"Back to the start";
+  row.innerHTML=back+'<span class="where">'+(i===0?"Start":"Part "+i+" of "+(screens.length-1))+'</span><button class="btn" data-go="'+(i<screens.length-1?i+1:0)+'">'+nextLabel+'</button>';
+  var fin=sc.el.querySelector("footer.finale");
+  if(fin) sc.el.insertBefore(row,fin); else sc.el.appendChild(row);
+  row.querySelectorAll("[data-go]").forEach(function(btn){ btn.addEventListener("click",function(){ go(+btn.dataset.go); }); });
+});
+var cur=-1;
+function go(i){
+  if(i===cur) return; cur=i;
+  screens.forEach(function(sc,j){ sc.el.classList.toggle("on",j===i); sc.tab.setAttribute("aria-selected",String(j===i)); });
+  sc=screens[i]; sc.tab.scrollIntoView({block:"nearest",inline:"center"});
+  window.scrollTo({top:0,behavior:"auto"});
+  window.dispatchEvent(new Event("resize"));
+  try{ history.replaceState(null,"","#"+screens[i].key); }catch(e){}
+}
+var sc;
+/* in-page links to a screen (eg the hero button) */
+document.addEventListener("click",function(e){
+  var a=e.target.closest('a[href^="#"]'); if(!a) return;
+  var key=a.getAttribute("href").slice(1), idx=-1;
+  screens.forEach(function(s,j){ if(s.key===key) idx=j; });
+  if(idx>=0){ e.preventDefault(); go(idx); }
+});
+var startKey=(location.hash||"").slice(1), first=0; screens.forEach(function(s,j){ if(s.key===startKey) first=j; });
+go(first);
+})();
+</script>
+</body>
+</html>
